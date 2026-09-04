@@ -112,6 +112,15 @@ security:
     - /snail-chat/**
     - /api/snail/chat/**
 
+# 书源采集 Worker 内部协议。生产环境必须通过环境变量注入共享密钥。
+reader:
+  source:
+    worker:
+      shared-secret: ${READER_SOURCE_WORKER_SECRET:}
+      claim-lease-seconds: ${READER_SOURCE_WORKER_CLAIM_LEASE_SECONDS:90}
+      max-items-per-result: ${READER_SOURCE_WORKER_MAX_ITEMS_PER_RESULT:100}
+      max-content-bytes: ${READER_SOURCE_WORKER_MAX_CONTENT_BYTES:2097152}
+
 # MyBatisPlus配置
 # https://baomidou.com/config/
 mybatis-plus:
