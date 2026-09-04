@@ -136,6 +136,9 @@ public class ReaderSourceWorkerServiceImpl implements IReaderSourceWorkerService
         ReaderSourceTask task = requireTask(run.getTaskId());
         ReaderSourceSite site = requireSite(task.getSiteId());
         ReaderSourceRule rule = requireRule(task.getRuleId());
+        if (!task.getExecutorType().equals(normalizeExecutor(bo.getExecutorType()))) {
+            throw new ServiceException("Worker 执行器与任务配置不一致");
+        }
         if (!rule.getVersionNo().equals(bo.getRuleVersion())) {
             throw new ServiceException("Worker 使用的规则版本与任务不一致");
         }
@@ -267,7 +270,7 @@ public class ReaderSourceWorkerServiceImpl implements IReaderSourceWorkerService
 
     private void validateResultRequest(ReaderSourceWorkerResultBo bo) {
         if (bo == null || StringUtils.isBlank(bo.getBatchId()) || bo.getRuleVersion() == null
-            || bo.getItems() == null || bo.getItems().size() > properties.getMaxItemsPerResult()) {
+            || bo.getItems() == null || bo.getItems().isEmpty() || bo.getItems().size() > properties.getMaxItemsPerResult()) {
             throw new ServiceException("结果批次、规则版本和章节列表不能为空，且批次不能超过限制");
         }
         if (!bo.getBatchId().matches("[A-Za-z0-9._:-]{1,128}")) {
@@ -321,6 +324,9 @@ public class ReaderSourceWorkerServiceImpl implements IReaderSourceWorkerService
         vo.setExecutorType(task.getExecutorType());
         vo.setSourceWorkUrl(task.getSourceWorkUrl());
         vo.setSourceWorkTitle(task.getSourceWorkTitle());
+        vo.setCatalogUrlTemplate(rule.getCatalogUrlTemplate());
+        vo.setChapterUrlTemplate(rule.getChapterUrlTemplate());
+        vo.setSelectorJson(rule.getSelectorJson());
         vo.setCursorChapterNo(task.getCurrentChapterNo());
         vo.setStartChapterNo(task.getStartChapterNo());
         vo.setEndChapterNo(task.getEndChapterNo());
@@ -334,6 +340,7 @@ public class ReaderSourceWorkerServiceImpl implements IReaderSourceWorkerService
         vo.setMaxRetries(policy.getMaxRetries());
         vo.setCircuitBreakerThreshold(policy.getCircuitBreakerThreshold());
         vo.setHonorRetryAfter(policy.getHonorRetryAfter());
+        vo.setClaimLeaseSeconds(properties.getClaimLeaseSeconds());
         return vo;
     }
 

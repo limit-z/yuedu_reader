@@ -15,6 +15,9 @@ public class ReaderSourceWorkerTaskVo {
     private String executorType;
     private String sourceWorkUrl;
     private String sourceWorkTitle;
+    private String catalogUrlTemplate;
+    private String chapterUrlTemplate;
+    private String selectorJson;
     private Integer cursorChapterNo;
     private Integer startChapterNo;
     private Integer endChapterNo;
@@ -28,4 +31,5 @@ public class ReaderSourceWorkerTaskVo {
     private Integer maxRetries;
     private Integer circuitBreakerThreshold;
     private String honorRetryAfter;
+    private Integer claimLeaseSeconds;
 }

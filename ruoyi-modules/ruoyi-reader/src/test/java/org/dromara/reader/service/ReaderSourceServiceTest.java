@@ -9,6 +9,7 @@ import org.dromara.reader.domain.ReaderSourceTaskRun;
 import org.dromara.reader.domain.bo.ReaderSourcePolicyBo;
 import org.dromara.reader.domain.bo.ReaderSourceRuleBo;
 import org.dromara.reader.domain.bo.ReaderSourceSiteBo;
+import org.dromara.reader.domain.bo.ReaderSourceTaskBo;
 import org.dromara.reader.mapper.ReaderSourcePolicyMapper;
 import org.dromara.reader.mapper.ReaderSourceRuleMapper;
 import org.dromara.reader.mapper.ReaderSourceSiteMapper;
@@ -43,6 +44,10 @@ class ReaderSourceServiceTest {
     private ReaderSourceTaskMapper taskMapper;
     @Mock
     private ReaderSourceTaskRunMapper taskRunMapper;
+    @Mock
+    private org.dromara.reader.mapper.ReaderSourceChapterSnapshotMapper snapshotMapper;
+    @Mock
+    private org.dromara.reader.mapper.ReaderSourceErrorMapper errorMapper;
 
     @InjectMocks
     private ReaderSourceServiceImpl service;
@@ -120,5 +125,39 @@ class ReaderSourceServiceTest {
         assertEquals("RUNNING", captor.getValue().getStatus());
         assertEquals("RUNNING", task.getStatus());
         verify(taskMapper).updateById(task);
+    }
+
+    @Test
+    void newTaskCursorShouldStartBeforeRequestedChapter() {
+        ReaderSourceSite site = new ReaderSourceSite();
+        site.setId(3L);
+        site.setStatus("1");
+        site.setComplianceStatus("APPROVED");
+        site.setAllowedHost("example.com");
+        ReaderSourceRule rule = new ReaderSourceRule();
+        rule.setId(4L);
+        rule.setSiteId(3L);
+        rule.setStatus("1");
+        ReaderSourcePolicy policy = new ReaderSourcePolicy();
+        policy.setId(5L);
+        policy.setStatus("1");
+        when(siteMapper.selectById(3L)).thenReturn(site);
+        when(ruleMapper.selectById(4L)).thenReturn(rule);
+        when(policyMapper.selectById(5L)).thenReturn(policy);
+
+        ReaderSourceTaskBo bo = new ReaderSourceTaskBo();
+        bo.setTaskName("从第五章开始");
+        bo.setSiteId(3L);
+        bo.setRuleId(4L);
+        bo.setPolicyId(5L);
+        bo.setSourceWorkUrl("https://example.com/book/1");
+        bo.setExecutorType("PYTHON");
+        bo.setStartChapterNo(5);
+
+        service.saveTask(bo);
+
+        ArgumentCaptor<ReaderSourceTask> captor = ArgumentCaptor.forClass(ReaderSourceTask.class);
+        verify(taskMapper).insert(captor.capture());
+        assertEquals(4, captor.getValue().getCurrentChapterNo());
     }
 }

@@ -295,7 +295,7 @@ public class ReaderSourceServiceImpl implements IReaderSourceService {
         task.setIncremental("0".equals(bo.getIncremental()) ? "0" : "1");
         if (task.getId() == null) {
             task.setStatus("DRAFT");
-            task.setCurrentChapterNo(bo.getStartChapterNo());
+            task.setCurrentChapterNo(bo.getStartChapterNo() == null ? 0 : bo.getStartChapterNo() - 1);
             taskMapper.insert(task);
         } else {
             taskMapper.updateById(task);

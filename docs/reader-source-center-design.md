@@ -100,6 +100,9 @@ Java 编排器只会下发已由管理员启动、且执行器类型匹配的运
   "workerId": "python-worker-01",
   "executorType": "PYTHON",
   "sourceWorkUrl": "https://allowed.example/book/1",
+  "catalogUrlTemplate": "https://allowed.example/book/{id}",
+  "chapterUrlTemplate": "https://allowed.example/chapter/{id}",
+  "selectorJson": {"catalog":{"item":".chapter-item","title":".chapter-title"},"chapter":{"title":"h1","content":".content"}},
   "cursorChapterNo": 20,
   "policy": {"concurrencyLimit": 1, "minDelayMs": 3000, "maxDelayMs": 8000, "requestsPerMinute": 10}
 }
@@ -184,23 +187,24 @@ POST /reader/worker/source/runs/{runId}/error
 ## 8. API 契约
 
 ```text
-GET    /reader/admin/source/sites
+GET    /reader/admin/source/sites/list
 POST   /reader/admin/source/sites
 PUT    /reader/admin/source/sites/{id}
 POST   /reader/admin/source/sites/{id}/check-compliance
 POST   /reader/admin/source/sites/{id}/enable
+POST   /reader/admin/source/sites/{id}/disable
 
-GET    /reader/admin/source/rules
+GET    /reader/admin/source/rules/list
 POST   /reader/admin/source/rules
 PUT    /reader/admin/source/rules/{id}
-POST   /reader/admin/source/rules/{id}/test
 POST   /reader/admin/source/rules/{id}/publish
+POST   /reader/admin/source/rules/{id}/disable
 
-GET    /reader/admin/source/policies
+GET    /reader/admin/source/policies/list
 POST   /reader/admin/source/policies
 PUT    /reader/admin/source/policies/{id}
 
-GET    /reader/admin/source/tasks
+GET    /reader/admin/source/tasks/list
 POST   /reader/admin/source/tasks
 GET    /reader/admin/source/tasks/{id}
 POST   /reader/admin/source/tasks/{id}/start
@@ -209,9 +213,13 @@ POST   /reader/admin/source/tasks/{id}/resume
 POST   /reader/admin/source/tasks/{id}/cancel
 GET    /reader/admin/source/tasks/{id}/runs
 GET    /reader/admin/source/tasks/{id}/diffs
+GET    /reader/admin/source/tasks/{id}/errors
 
-GET    /reader/admin/source/errors
-GET    /reader/admin/source/metrics
+POST   /reader/worker/source/runs/claim
+POST   /reader/worker/source/runs/{runId}/permit
+POST   /reader/worker/source/runs/{runId}/heartbeat
+POST   /reader/worker/source/runs/{runId}/result
+POST   /reader/worker/source/runs/{runId}/error
 ```
 
 ## 9. 分阶段交付
@@ -221,21 +229,21 @@ GET    /reader/admin/source/metrics
 - 建表、实体、Mapper、站点/规则/策略/任务/运行记录 CRUD。
 - 管理端列表和编辑页，任务状态和运行记录可查询。
 - Redis 租约、基础限流、幂等键和熔断状态接口。
-- Java HTTP Worker 适配器和统一协议校验。
+- Worker HTTP 协议、统一协议校验和 Java 编排层的租约/限流协调。
 
-当前代码进度：站点、策略、规则、任务、运行记录的持久化模型、管理端 CRUD、合规确认、站点/规则状态流转、任务启动暂停恢复取消和运行记录查询已完成；Java HTTP Worker、Redis 分布式租约/动态限流、章节快照入库和审核接收链路列入 P1，当前不会把任务状态伪装成已抓取成功。
+当前代码进度：站点、策略、规则、任务、运行记录的持久化模型、管理端 CRUD、合规确认、站点/规则状态流转、任务启动暂停恢复取消和运行记录查询已完成；Worker HTTP 协议、Redis 分布式租约/动态限流、章节快照入库、哈希校验、错误记录和待审核边界已完成。Python/Go 参考 Worker 已提供，正式部署仍需配置环境变量并由管理员确认站点授权。
 
 ### P1：可执行和可审核
 
-- Python Worker 参考实现，支持声明式 CSS/JSONPath 规则。
+- Python Worker 参考实现，支持声明式 CSS 规则和同一 HTTP 协议。
+- Go Worker 参考实现，支持声明式 CSS 规则和同一 HTTP 协议。
 - 任务启动、暂停、恢复、取消、Worker 领取和心跳。
 - 章节快照、内容哈希、重复回传幂等、差异查询和待审核入库边界。
 - 指标、审计日志、错误重试和站点健康状态。
 
 ### P2：多执行器和生产化
 
-- Go Worker 参考实现和消息队列传输。
-- 站点策略模板、动态 `Retry-After`、配额和告警。
+- 消息队列传输、站点策略模板、动态 `Retry-After`、配额和告警。
 - 规则灰度、版本回滚、分布式 worker 调度和运行报表。
 - 合规检查凭证、授权材料和数据来源追踪。
 
