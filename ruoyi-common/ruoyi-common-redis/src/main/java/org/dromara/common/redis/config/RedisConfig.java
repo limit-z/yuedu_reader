@@ -82,28 +82,64 @@ public class RedisConfig {
             RedissonProperties.SingleServerConfig singleServerConfig = redissonProperties.getSingleServerConfig();
             if (ObjectUtil.isNotNull(singleServerConfig)) {
                 // 使用单机模式
-                config.useSingleServer()
-                    .setTimeout(singleServerConfig.getTimeout())
+                var singleServer = config.useSingleServer()
                     .setClientName(singleServerConfig.getClientName())
-                    .setIdleConnectionTimeout(singleServerConfig.getIdleConnectionTimeout())
                     .setSubscriptionConnectionPoolSize(singleServerConfig.getSubscriptionConnectionPoolSize())
                     .setConnectionMinimumIdleSize(singleServerConfig.getConnectionMinimumIdleSize())
-                    .setConnectionPoolSize(singleServerConfig.getConnectionPoolSize());
+                    .setConnectionPoolSize(singleServerConfig.getConnectionPoolSize())
+                    .setKeepAlive(singleServerConfig.isKeepAlive());
+                // 仅在显式配置了超时/重试类参数时才覆盖 Redisson 默认值，避免 0 值误伤默认行为。
+                if (singleServerConfig.getConnectTimeout() > 0) {
+                    singleServer.setConnectTimeout(singleServerConfig.getConnectTimeout());
+                }
+                if (singleServerConfig.getTimeout() > 0) {
+                    singleServer.setTimeout(singleServerConfig.getTimeout());
+                }
+                if (singleServerConfig.getIdleConnectionTimeout() > 0) {
+                    singleServer.setIdleConnectionTimeout(singleServerConfig.getIdleConnectionTimeout());
+                }
+                if (singleServerConfig.getRetryAttempts() > 0) {
+                    singleServer.setRetryAttempts(singleServerConfig.getRetryAttempts());
+                }
+                if (singleServerConfig.getRetryInterval() > 0) {
+                    singleServer.setRetryInterval(singleServerConfig.getRetryInterval());
+                }
+                if (singleServerConfig.getPingConnectionInterval() > 0) {
+                    singleServer.setPingConnectionInterval(singleServerConfig.getPingConnectionInterval());
+                }
             }
             // 集群配置方式 参考下方注释
             RedissonProperties.ClusterServersConfig clusterServersConfig = redissonProperties.getClusterServersConfig();
             if (ObjectUtil.isNotNull(clusterServersConfig)) {
-                config.useClusterServers()
-                    .setTimeout(clusterServersConfig.getTimeout())
+                var clusterServer = config.useClusterServers()
                     .setClientName(clusterServersConfig.getClientName())
-                    .setIdleConnectionTimeout(clusterServersConfig.getIdleConnectionTimeout())
                     .setSubscriptionConnectionPoolSize(clusterServersConfig.getSubscriptionConnectionPoolSize())
                     .setMasterConnectionMinimumIdleSize(clusterServersConfig.getMasterConnectionMinimumIdleSize())
                     .setMasterConnectionPoolSize(clusterServersConfig.getMasterConnectionPoolSize())
                     .setSlaveConnectionMinimumIdleSize(clusterServersConfig.getSlaveConnectionMinimumIdleSize())
                     .setSlaveConnectionPoolSize(clusterServersConfig.getSlaveConnectionPoolSize())
                     .setReadMode(clusterServersConfig.getReadMode())
-                    .setSubscriptionMode(clusterServersConfig.getSubscriptionMode());
+                    .setSubscriptionMode(clusterServersConfig.getSubscriptionMode())
+                    .setKeepAlive(clusterServersConfig.isKeepAlive());
+                // 集群模式同样只在配置项给出值时覆盖默认参数，避免不同环境共享配置时出现隐性副作用。
+                if (clusterServersConfig.getConnectTimeout() > 0) {
+                    clusterServer.setConnectTimeout(clusterServersConfig.getConnectTimeout());
+                }
+                if (clusterServersConfig.getTimeout() > 0) {
+                    clusterServer.setTimeout(clusterServersConfig.getTimeout());
+                }
+                if (clusterServersConfig.getIdleConnectionTimeout() > 0) {
+                    clusterServer.setIdleConnectionTimeout(clusterServersConfig.getIdleConnectionTimeout());
+                }
+                if (clusterServersConfig.getRetryAttempts() > 0) {
+                    clusterServer.setRetryAttempts(clusterServersConfig.getRetryAttempts());
+                }
+                if (clusterServersConfig.getRetryInterval() > 0) {
+                    clusterServer.setRetryInterval(clusterServersConfig.getRetryInterval());
+                }
+                if (clusterServersConfig.getPingConnectionInterval() > 0) {
+                    clusterServer.setPingConnectionInterval(clusterServersConfig.getPingConnectionInterval());
+                }
             }
             log.info("初始化 redis 配置");
         };

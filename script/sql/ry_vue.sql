@@ -242,6 +242,12 @@ insert into sys_menu values(1761400000000000118, '文件管理', 176140000000000
 insert into sys_menu values(1761400000000000120, '任务调度中心', 1761400000000000002, 6, 'snailjob', 'monitor/snailjob/index', '', 'N', 'Y', 'C', '0', '0', 'monitor:snailjob:list', 'job', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, 'SnailJob控制台菜单');
 -- snail-ai server控制台
 insert into sys_menu values(1761400000000000121, 'AI控制台', 1761400000000000002, 7, 'snailai', 'monitor/snailai/index', '', 'N', 'Y', 'C', '0', '0', 'monitor:snailai:list', 'checkbox', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, 'AI控制台菜单');
+-- 阅读器管理
+insert into sys_menu values(1761400000000000010, '阅读器管理', 0, 10, 'reader-admin', null, '', 'N', 'Y', 'M', '0', '0', '', 'book', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '阅读器管理目录');
+insert into sys_menu values(1761400000000000011, '作品管理', 1761400000000000010, 1, 'work', 'reader-admin/work/index', '', 'N', 'Y', 'C', '0', '0', 'reader:work:list', 'document', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '作品管理菜单');
+insert into sys_menu values(1761400000000000012, '导入任务', 1761400000000000010, 2, 'import-task', 'reader-admin/import-task/index', '', 'N', 'Y', 'C', '0', '0', 'reader:import-task:list', 'upload', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '导入任务菜单');
+insert into sys_menu values(1761400000000000013, '内容审核', 1761400000000000010, 3, 'audit', 'reader-admin/audit/index', '', 'N', 'Y', 'C', '0', '0', 'reader:audit:list', 'check', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '内容审核菜单');
+insert into sys_menu values(1761400000000000014, '发布记录', 1761400000000000010, 4, 'publish-log', 'reader-admin/publish-log/index', '', 'N', 'Y', 'C', '0', '0', 'reader:publish-log:list', 'clock', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '发布记录菜单');
 
 -- 三级菜单
 insert into sys_menu values(1761400000000000500, '操作日志', 1761400000000000108, 1, 'operlog', 'monitor/operlog/index', '', 'N', 'Y', 'C', '0', '0', 'monitor:operlog:list', 'form', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '操作日志菜单');
@@ -476,6 +482,11 @@ insert into sys_role_menu values (1761300000000000003, 1761400000000011641);
 insert into sys_role_menu values (1761300000000000003, 1761400000000011642);
 insert into sys_role_menu values (1761300000000000003, 1761400000000011643);
 insert into sys_role_menu values (1761300000000000003, 1761400000000011701);
+insert into sys_role_menu values (1761300000000000003, 1761400000000000010);
+insert into sys_role_menu values (1761300000000000003, 1761400000000000011);
+insert into sys_role_menu values (1761300000000000003, 1761400000000000012);
+insert into sys_role_menu values (1761300000000000003, 1761400000000000013);
+insert into sys_role_menu values (1761300000000000003, 1761400000000000014);
 insert into sys_role_menu values (1761300000000000004, 1761400000000000005);
 insert into sys_role_menu values (1761300000000000004, 1761400000000001500);
 insert into sys_role_menu values (1761300000000000004, 1761400000000001501);
@@ -931,4 +942,3 @@ INSERT INTO test_tree VALUES (1762200000000000010, 1762200000000000007, 17610000
 INSERT INTO test_tree VALUES (1762200000000000011, 1762200000000000007, 1761000000000000108, 1761100000000000003, '子节点77', 0, 1761000000000000103, sysdate(), 1761100000000000001, NULL, NULL, 0);
 INSERT INTO test_tree VALUES (1762200000000000012, 1762200000000000010, 1761000000000000108, 1761100000000000003, '子节点88', 0, 1761000000000000103, sysdate(), 1761100000000000001, NULL, NULL, 0);
 INSERT INTO test_tree VALUES (1762200000000000013, 1762200000000000010, 1761000000000000108, 1761100000000000003, '子节点99', 0, 1761000000000000103, sysdate(), 1761100000000000001, NULL, NULL, 0);
-

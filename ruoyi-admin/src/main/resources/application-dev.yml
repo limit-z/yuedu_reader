@@ -100,9 +100,9 @@ spring:
           driverClassName: com.mysql.cj.jdbc.Driver
           # jdbc 所有参数配置参考 https://lionli.blog.csdn.net/article/details/122018562
           # rewriteBatchedStatements=true 批处理优化 大幅提升批量插入更新删除性能(对数据库有性能损耗 使用批量操作应考虑性能问题)
-          url: jdbc:mysql://localhost:3306/ry-vue?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8&autoReconnect=true&rewriteBatchedStatements=true&allowPublicKeyRetrieval=true&nullCatalogMeansCurrent=true
-          username: root
-          password: root
+          url: ${READER_DB_URL:jdbc:mysql://localhost:3306/ry-vue?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8&autoReconnect=true&rewriteBatchedStatements=true&allowPublicKeyRetrieval=true&nullCatalogMeansCurrent=true}
+          username: ${READER_DB_USERNAME:root}
+          password: ${READER_DB_PASSWORD:}
 #        # 从库数据源
 #        slave:
 #          lazy: true
@@ -149,13 +149,13 @@ spring:
 spring.data:
   redis:
     # 地址
-    host: localhost
+    host: ${READER_REDIS_HOST:localhost}
     # 端口，默认为6379
-    port: 6379
+    port: ${READER_REDIS_PORT:6379}
     # 数据库索引
-    database: 0
+    database: ${READER_REDIS_DATABASE:0}
     # redis 密码必须配置
-    password: ruoyi123
+    password: ${READER_REDIS_PASSWORD:}
     # 连接超时时间
     timeout: 10s
     # 是否开启ssl
@@ -177,10 +177,20 @@ redisson:
     connectionMinimumIdleSize: 8
     # 连接池大小
     connectionPoolSize: 32
+    # 建立连接超时，单位：毫秒。开发环境连远程 Redis 时适当放宽，降低跨公网偶发握手抖动带来的失败率。
+    connectTimeout: 10000
     # 连接空闲超时，单位：毫秒
-    idleConnectionTimeout: 10000
-    # 命令等待超时，单位：毫秒
-    timeout: 3000
+    idleConnectionTimeout: 20000
+    # 命令等待超时，单位：毫秒。原先 3000ms 对远程调试过紧，网络波动时容易出现 redisson read timeout。
+    timeout: 10000
+    # 命令失败后的重试次数
+    retryAttempts: 3
+    # 命令重试间隔，单位：毫秒
+    retryInterval: 1500
+    # 连接活性探测间隔，单位：毫秒
+    pingConnectionInterval: 30000
+    # 开启 TCP keepalive，减轻公网空闲连接被中间设备回收的概率
+    keepAlive: true
     # 发布和订阅连接池大小
     subscriptionConnectionPoolSize: 50
 

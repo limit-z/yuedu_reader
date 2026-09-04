@@ -429,6 +429,13 @@
                 <version>${revision}</version>
             </dependency>
 
+            <!-- 阅读器业务模块 -->
+            <dependency>
+                <groupId>org.dromara</groupId>
+                <artifactId>ruoyi-reader</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
             <!-- 代码生成模块 -->
             <dependency>
                 <groupId>org.dromara</groupId>

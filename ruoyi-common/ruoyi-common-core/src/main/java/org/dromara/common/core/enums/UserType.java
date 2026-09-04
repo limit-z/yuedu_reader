@@ -21,7 +21,12 @@ public enum UserType {
     /**
      * 移动客户端用户
      */
-    APP_USER("app_user");
+    APP_USER("app_user"),
+
+    /**
+     * 阅读器读者用户
+     */
+    READER_USER("reader_user");
 
     /**
      * 用户类型标识（用于 token、权限识别等）

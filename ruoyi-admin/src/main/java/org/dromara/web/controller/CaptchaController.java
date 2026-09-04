@@ -5,27 +5,19 @@ import cn.hutool.captcha.generator.CodeGenerator;
 import cn.hutool.captcha.generator.MathGenerator;
 import cn.hutool.captcha.generator.RandomGenerator;
 import cn.hutool.core.util.IdUtil;
-import cn.hutool.core.util.RandomUtil;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.dromara.common.core.constant.Constants;
 import org.dromara.common.core.constant.GlobalConstants;
 import org.dromara.common.core.domain.R;
-import org.dromara.common.core.exception.ServiceException;
 import org.dromara.common.core.utils.SpringUtils;
 import org.dromara.common.core.utils.StringUtils;
 import org.dromara.common.core.utils.regex.RegexValidator;
-import org.dromara.common.mail.config.properties.MailProperties;
-import org.dromara.common.mail.core.MailBuilder;
 import org.dromara.common.redis.annotation.RateLimiter;
 import org.dromara.common.redis.enums.LimitType;
 import org.dromara.common.redis.utils.RedisUtils;
 import org.dromara.common.web.config.properties.CaptchaProperties;
 import org.dromara.common.web.core.WaveAndCircleCaptcha;
-import org.dromara.sms4j.api.SmsBlend;
-import org.dromara.sms4j.api.entity.SmsResponse;
-import org.dromara.sms4j.core.factory.SmsFactory;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
@@ -35,7 +27,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.awt.*;
 import java.time.Duration;
-import java.util.LinkedHashMap;
 
 /**
  * 验证码操作处理
@@ -43,14 +34,17 @@ import java.util.LinkedHashMap;
  * @author Lion Li
  */
 @SaIgnore
-@Slf4j
 @Validated
 @RequiredArgsConstructor
 @RestController
 public class CaptchaController {
 
+    /**
+     * 上线前联调固定验证码。
+     */
+    private static final String MOCK_LOGIN_CODE = "111111";
+
     private final CaptchaProperties captchaProperties;
-    private final MailProperties mailProperties;
 
     /**
      * 发送短信验证码。
@@ -65,19 +59,7 @@ public class CaptchaController {
             return R.fail("请输入正确的手机号！");
         }
         String key = GlobalConstants.CAPTCHA_CODE_KEY + phoneNumber;
-        String code = RandomUtil.randomNumbers(4);
-        // 验证码模板id 自行处理 (查数据库或写死均可)
-        String templateId = "";
-        LinkedHashMap<String, String> map = new LinkedHashMap<>(1);
-        map.put("code", code);
-        SmsBlend smsBlend = SmsFactory.getSmsBlend("config1");
-        SmsResponse smsResponse = smsBlend.sendMessage(phoneNumber, templateId, map);
-        if (!smsResponse.isSuccess()) {
-            log.error("验证码短信发送异常 => {}", smsResponse);
-            Object data = smsResponse.getData();
-            return R.fail(data == null ? "验证码短信发送失败" : data.toString());
-        }
-        RedisUtils.setCacheObject(key, code, Duration.ofMinutes(Constants.CAPTCHA_EXPIRATION));
+        RedisUtils.setCacheObject(key, MOCK_LOGIN_CODE, Duration.ofMinutes(Constants.CAPTCHA_EXPIRATION));
         return R.ok();
     }
 
@@ -89,9 +71,6 @@ public class CaptchaController {
      */
     @GetMapping("/resource/email/code")
     public R<Void> emailCode(@NotBlank(message = "{user.email.not.blank}") String email) {
-        if (!mailProperties.getEnabled()) {
-            return R.fail("当前系统没有开启邮箱功能！");
-        }
         if (!RegexValidator.isEmail(email)) {
             return R.fail("请输入正确的邮箱地址！");
         }
@@ -107,18 +86,7 @@ public class CaptchaController {
     @RateLimiter(key = "#email", time = 60, count = 1)
     public void emailCodeImpl(String email) {
         String key = GlobalConstants.CAPTCHA_CODE_KEY + email;
-        String code = RandomUtil.randomNumbers(4);
-        try {
-            MailBuilder.of()
-                .to(email)
-                .subject("登录验证码")
-                .text("您本次验证码为：" + code + "，有效性为" + Constants.CAPTCHA_EXPIRATION + "分钟，请尽快填写。")
-                .send();
-            RedisUtils.setCacheObject(key, code, Duration.ofMinutes(Constants.CAPTCHA_EXPIRATION));
-        } catch (Exception e) {
-            log.error("验证码短信发送异常 => {}", e.getMessage());
-            throw new ServiceException(e.getMessage());
-        }
+        RedisUtils.setCacheObject(key, MOCK_LOGIN_CODE, Duration.ofMinutes(Constants.CAPTCHA_EXPIRATION));
     }
 
     /**

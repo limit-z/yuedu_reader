@@ -63,6 +63,11 @@ public class RedissonProperties {
         private int connectionPoolSize;
 
         /**
+         * 建立连接超时，单位：毫秒
+         */
+        private int connectTimeout;
+
+        /**
          * 连接空闲超时，单位：毫秒
          */
         private int idleConnectionTimeout;
@@ -71,6 +76,26 @@ public class RedissonProperties {
          * 命令等待超时，单位：毫秒
          */
         private int timeout;
+
+        /**
+         * 命令失败后的重试次数
+         */
+        private int retryAttempts;
+
+        /**
+         * 命令重试间隔，单位：毫秒
+         */
+        private int retryInterval;
+
+        /**
+         * 连接保活探测间隔，单位：毫秒
+         */
+        private int pingConnectionInterval;
+
+        /**
+         * 是否开启 TCP keepalive
+         */
+        private boolean keepAlive;
 
         /**
          * 发布和订阅连接池大小
@@ -112,6 +137,11 @@ public class RedissonProperties {
         private int slaveConnectionPoolSize;
 
         /**
+         * 建立连接超时，单位：毫秒
+         */
+        private int connectTimeout;
+
+        /**
          * 连接空闲超时，单位：毫秒
          */
         private int idleConnectionTimeout;
@@ -120,6 +150,26 @@ public class RedissonProperties {
          * 命令等待超时，单位：毫秒
          */
         private int timeout;
+
+        /**
+         * 命令失败后的重试次数
+         */
+        private int retryAttempts;
+
+        /**
+         * 命令重试间隔，单位：毫秒
+         */
+        private int retryInterval;
+
+        /**
+         * 连接保活探测间隔，单位：毫秒
+         */
+        private int pingConnectionInterval;
+
+        /**
+         * 是否开启 TCP keepalive
+         */
+        private boolean keepAlive;
 
         /**
          * 发布和订阅连接池大小
