@@ -10,6 +10,8 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "reader.source.worker")
 public class ReaderSourceWorkerProperties {
     private String sharedSecret;
+    /** Only for an explicitly enabled local Mock source; keep false in production. */
+    private boolean allowPrivateForTest = false;
     private int claimLeaseSeconds = 90;
     private int maxItemsPerResult = 100;
     private int maxContentBytes = 2 * 1024 * 1024;

@@ -38,6 +38,7 @@ class Worker:
         self.secret = os.getenv("READER_SOURCE_WORKER_SECRET", "")
         self.worker_id = os.getenv("READER_SOURCE_WORKER_ID", socket.gethostname() + "-worker")
         self.poll_seconds = max(2, int(os.getenv("READER_SOURCE_POLL_SECONDS", "5")))
+        self.allow_private_for_test = os.getenv("READER_SOURCE_ALLOW_PRIVATE_FOR_TEST", "false").lower() == "true"
         self.stop_event = Event()
         if not self.secret:
             raise RuntimeError("READER_SOURCE_WORKER_SECRET is required")
@@ -179,7 +180,8 @@ class Worker:
         retry_at = None
         retry_after = getattr(exc, "retry_after", None)
         if retry_after and str(retry_after).isdigit():
-            retry_at = (dt.datetime.now(dt.timezone.utc) + dt.timedelta(seconds=int(retry_after))).isoformat()
+            # The API field is Java LocalDateTime, so omit the timezone suffix.
+            retry_at = (dt.datetime.now() + dt.timedelta(seconds=int(retry_after))).replace(microsecond=0).isoformat()
         try:
             self._post("/reader/worker/source/runs/{}/error".format(task["runId"]), {
                 "runId": task["runId"],
@@ -276,10 +278,11 @@ class Worker:
             raise ValueError("source URL must be a credential-free HTTP(S) URL")
         if source and parsed.hostname.lower() != (source.hostname or "").lower():
             raise ValueError("source URL leaves the approved host")
-        for info in socket.getaddrinfo(parsed.hostname, parsed.port or (443 if parsed.scheme == "https" else 80)):
-            address = ipaddress.ip_address(info[4][0])
-            if address.is_private or address.is_loopback or address.is_link_local or address.is_multicast or address.is_reserved:
-                raise ValueError("source URL resolves to a non-public address")
+        if not self.allow_private_for_test:
+            for info in socket.getaddrinfo(parsed.hostname, parsed.port or (443 if parsed.scheme == "https" else 80)):
+                address = ipaddress.ip_address(info[4][0])
+                if address.is_private or address.is_loopback or address.is_link_local or address.is_multicast or address.is_reserved:
+                    raise ValueError("source URL resolves to a non-public address")
         return parsed.hostname
 
     def _polite_delay(self, task):

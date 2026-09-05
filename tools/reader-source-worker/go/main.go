@@ -24,10 +24,11 @@ import (
 const batchSize = 20
 
 type worker struct {
-	baseURL  string
-	secret   string
-	workerID string
-	client   *http.Client
+	baseURL             string
+	secret              string
+	workerID            string
+	client              *http.Client
+	allowPrivateForTest bool
 }
 
 type sourceHTTPError struct {
@@ -39,22 +40,35 @@ type sourceHTTPError struct {
 func (e sourceHTTPError) Error() string { return e.message }
 
 type task struct {
-	RunID                int64           `json:"runId"`
-	RunToken             string          `json:"runToken"`
-	SourceWorkURL        string          `json:"sourceWorkUrl"`
-	CatalogURLTemplate   string          `json:"catalogUrlTemplate"`
-	ChapterURLTemplate   string          `json:"chapterUrlTemplate"`
-	SelectorJSON         string          `json:"selectorJson"`
-	RuleVersion          int             `json:"ruleVersion"`
-	CursorChapterNo      int             `json:"cursorChapterNo"`
-	StartChapterNo       int             `json:"startChapterNo"`
-	EndChapterNo         *int            `json:"endChapterNo"`
-	MinDelayMs           int             `json:"minDelayMs"`
-	MaxDelayMs           int             `json:"maxDelayMs"`
-	MaxRetries           int             `json:"maxRetries"`
-	ConnectTimeoutMs     int             `json:"connectTimeoutMs"`
-	ReadTimeoutMs        int             `json:"readTimeoutMs"`
-	ClaimLeaseSeconds    int             `json:"claimLeaseSeconds"`
+	RunID              flexibleInt64 `json:"runId"`
+	RunToken           string        `json:"runToken"`
+	SourceWorkURL      string        `json:"sourceWorkUrl"`
+	CatalogURLTemplate string        `json:"catalogUrlTemplate"`
+	ChapterURLTemplate string        `json:"chapterUrlTemplate"`
+	SelectorJSON       string        `json:"selectorJson"`
+	RuleVersion        int           `json:"ruleVersion"`
+	CursorChapterNo    int           `json:"cursorChapterNo"`
+	StartChapterNo     int           `json:"startChapterNo"`
+	EndChapterNo       *int          `json:"endChapterNo"`
+	MinDelayMs         int           `json:"minDelayMs"`
+	MaxDelayMs         int           `json:"maxDelayMs"`
+	MaxRetries         int           `json:"maxRetries"`
+	ConnectTimeoutMs   int           `json:"connectTimeoutMs"`
+	ReadTimeoutMs      int           `json:"readTimeoutMs"`
+	ClaimLeaseSeconds  int           `json:"claimLeaseSeconds"`
+}
+
+// Jackson may serialize Java Long values as JSON strings; accept both forms.
+type flexibleInt64 int64
+
+func (value *flexibleInt64) UnmarshalJSON(raw []byte) error {
+	text := strings.Trim(string(raw), "\"")
+	parsed, err := strconv.ParseInt(text, 10, 64)
+	if err != nil {
+		return fmt.Errorf("invalid int64 value %q: %w", text, err)
+	}
+	*value = flexibleInt64(parsed)
+	return nil
 }
 
 type selectors struct {
@@ -85,7 +99,7 @@ func main() {
 		workerID = "go-worker"
 	}
 	baseURL := strings.TrimRight(env("READER_SOURCE_API_BASE_URL", "http://127.0.0.1:8080"), "/")
-	w := &worker{baseURL: baseURL, secret: secret, workerID: workerID, client: &http.Client{Timeout: 30 * time.Second}}
+	w := &worker{baseURL: baseURL, secret: secret, workerID: workerID, client: &http.Client{Timeout: 30 * time.Second}, allowPrivateForTest: strings.EqualFold(os.Getenv("READER_SOURCE_ALLOW_PRIVATE_FOR_TEST"), "true")}
 	for {
 		var claimed task
 		if err := w.post("/reader/worker/source/runs/claim", map[string]any{"executorType": "GO", "workerId": workerID}, &claimed); err != nil {
@@ -121,7 +135,7 @@ func (w *worker) run(t *task) error {
 	if catalogURL == "" {
 		catalogURL = t.SourceWorkURL
 	}
-	if err := validatePublicSameHost(catalogURL, t.SourceWorkURL); err != nil {
+	if err := validatePublicSameHost(catalogURL, t.SourceWorkURL, w.allowPrivateForTest); err != nil {
 		return err
 	}
 	catalogHTML, _, err := w.fetch(t, catalogURL)
@@ -147,7 +161,7 @@ func (w *worker) run(t *task) error {
 			if chapterURL == "" {
 				chapterURL = c.URL
 			}
-			if err := validatePublicSameHost(chapterURL, t.SourceWorkURL); err != nil {
+			if err := validatePublicSameHost(chapterURL, t.SourceWorkURL, w.allowPrivateForTest); err != nil {
 				return err
 			}
 			body, _, fetchErr := w.fetch(t, chapterURL)
@@ -257,7 +271,7 @@ func (w *worker) reportError(t *task, err error, sourceURL string, status int) {
 	}
 	if isHTTPError && httpError.retryAfter != "" {
 		if seconds, parseErr := strconv.Atoi(strings.TrimSpace(httpError.retryAfter)); parseErr == nil && seconds >= 0 {
-			payload["retryAt"] = time.Now().UTC().Add(time.Duration(seconds) * time.Second).Format(time.RFC3339)
+			payload["retryAt"] = time.Now().Add(time.Duration(seconds) * time.Second).Format("2006-01-02T15:04:05")
 		}
 	}
 	_ = w.post(fmt.Sprintf("/reader/worker/source/runs/%d/error", t.RunID), payload, nil)
@@ -390,7 +404,7 @@ func expandURL(template, workURL, chapterURL string, chapterNo int) string {
 	return base.ResolveReference(path).String()
 }
 
-func validatePublicSameHost(target, approved string) error {
+func validatePublicSameHost(target, approved string, allowPrivateForTest bool) error {
 	got, err := url.Parse(target)
 	if err != nil || got.Scheme != "http" && got.Scheme != "https" || got.Hostname() == "" || got.User != nil {
 		return errors.New("source URL must be a credential-free HTTP(S) URL")
@@ -398,6 +412,9 @@ func validatePublicSameHost(target, approved string) error {
 	allowed, err := url.Parse(approved)
 	if err != nil || !strings.EqualFold(got.Hostname(), allowed.Hostname()) {
 		return errors.New("source URL leaves the approved host")
+	}
+	if allowPrivateForTest {
+		return nil
 	}
 	addresses, err := net.LookupIP(got.Hostname())
 	if err != nil {

@@ -438,11 +438,13 @@ public class ReaderSourceWorkerServiceImpl implements IReaderSourceWorkerService
             throw new ServiceException("章节来源地址不属于允许站点");
         }
         try {
-            for (InetAddress address : InetAddress.getAllByName(uri.getHost())) {
-                if (address.isAnyLocalAddress() || address.isLoopbackAddress() || address.isLinkLocalAddress()
-                    || address.isSiteLocalAddress() || address.isMulticastAddress()
-                    || "169.254.169.254".equals(address.getHostAddress())) {
-                    throw new ServiceException("章节来源地址不允许访问内网地址");
+            if (!properties.isAllowPrivateForTest()) {
+                for (InetAddress address : InetAddress.getAllByName(uri.getHost())) {
+                    if (address.isAnyLocalAddress() || address.isLoopbackAddress() || address.isLinkLocalAddress()
+                        || address.isSiteLocalAddress() || address.isMulticastAddress()
+                        || "169.254.169.254".equals(address.getHostAddress())) {
+                        throw new ServiceException("章节来源地址不允许访问内网地址");
+                    }
                 }
             }
         } catch (UnknownHostException ex) {

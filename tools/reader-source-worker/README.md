@@ -8,6 +8,20 @@ workers do not provide proxy rotation, CAPTCHA bypass, fingerprint spoofing,
 paywall bypass, or ban evasion. Every source request first obtains a permit from
 the Java service, so all workers share the Redis rate-limit state.
 
+## Java
+
+```bash
+cd java
+export READER_SOURCE_API_BASE_URL=http://127.0.0.1:8080
+export READER_SOURCE_WORKER_SECRET='set-out-of-band'
+export READER_SOURCE_WORKER_ID=java-worker-01
+mvn -q compile exec:java
+```
+
+The Java worker uses Jsoup for the same declaration-only CSS selector contract
+as the Python and Go workers. It also renews the run lease and reports parsing
+and HTTP failures to the server.
+
 ## Python
 
 ```bash
@@ -52,3 +66,9 @@ production deployment.
 `READER_SOURCE_WORKER_SECRET` is required and must match the server environment.
 `READER_SOURCE_WORKER_ID` defaults to the process hostname plus `-worker`.
 `READER_SOURCE_POLL_SECONDS` defaults to 5.
+
+`READER_SOURCE_ALLOW_PRIVATE_FOR_TEST=true` is an explicit local-test switch
+for a loopback Mock source only. Set the same variable for the Java backend
+when running the local Mock end-to-end test. It must remain unset or false in
+production; the default rejects private, loopback, link-local, multicast,
+reserved, and metadata addresses.
