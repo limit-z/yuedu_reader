@@ -215,6 +215,26 @@ GET    /reader/admin/source/tasks/{id}/runs
 GET    /reader/admin/source/tasks/{id}/diffs
 GET    /reader/admin/source/tasks/{id}/errors
 
+GET    /reader/admin/source-discovery/providers
+POST   /reader/admin/source-discovery/providers
+PUT    /reader/admin/source-discovery/providers/{providerId}
+POST   /reader/admin/source-discovery/providers/{providerId}/run
+POST   /reader/admin/source-discovery/providers/{providerId}/enable
+POST   /reader/admin/source-discovery/providers/{providerId}/disable
+
+GET    /reader/admin/source-discovery/blacklist
+POST   /reader/admin/source-discovery/blacklist
+PUT    /reader/admin/source-discovery/blacklist/{blacklistId}
+DELETE /reader/admin/source-discovery/blacklist/{blacklistId}
+POST   /reader/admin/source-discovery/blacklist/{blacklistId}/enable
+POST   /reader/admin/source-discovery/blacklist/{blacklistId}/disable
+
+GET    /reader/admin/source-discovery/candidates
+POST   /reader/admin/source-discovery/candidates/{candidateId}/check
+POST   /reader/admin/source-discovery/candidates/{candidateId}/approve
+POST   /reader/admin/source-discovery/candidates/{candidateId}/reject
+GET    /reader/admin/source-discovery/runs
+
 POST   /reader/worker/source/runs/claim
 POST   /reader/worker/source/runs/{runId}/permit
 POST   /reader/worker/source/runs/{runId}/heartbeat
@@ -240,6 +260,8 @@ POST   /reader/worker/source/runs/{runId}/error
 - 任务启动、暂停、恢复、取消、Worker 领取和心跳。
 - 章节快照、内容哈希、重复回传幂等、差异查询和待审核入库边界。
 - 指标、审计日志、错误重试和站点健康状态。
+
+书源自动发现中心已完成第一阶段：管理员配置公开索引或授权 Feed，系统执行黑名单、公网地址、robots.txt 和基础连通性检查，候选进入人工审核列表；通过审核只生成停用的正式站点，不会自动创建或启动采集任务。
 
 ### P2：多执行器和生产化
 

@@ -130,6 +130,11 @@ public class ReaderSourceRedisCoordinator {
         return Boolean.TRUE.equals(redissonClient.getBucket(KEY_PREFIX + "site:circuit:" + siteId).get());
     }
 
+    /** 防止同一个发现源被手工运行和定时任务同时访问。 */
+    public RLock discoveryProviderLock(Long providerId) {
+        return redissonClient.getLock(KEY_PREFIX + "discovery:provider:lock:" + providerId);
+    }
+
     private RBucket<String> claimBucket(Long runId) {
         return redissonClient.getBucket(KEY_PREFIX + "run:claim:" + runId);
     }
