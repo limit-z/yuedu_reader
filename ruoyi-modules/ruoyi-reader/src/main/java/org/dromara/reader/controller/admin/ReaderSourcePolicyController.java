@@ -7,6 +7,7 @@ import org.dromara.common.core.domain.R;
 import org.dromara.common.mybatis.core.page.PageQuery;
 import org.dromara.reader.domain.ReaderSourcePolicy;
 import org.dromara.reader.domain.bo.ReaderSourcePolicyBo;
+import org.dromara.reader.domain.vo.admin.ReaderBatchActionResult;
 import org.dromara.reader.service.IReaderSourceService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -45,5 +46,15 @@ public class ReaderSourcePolicyController {
         bo.setId(policyId);
         sourceService.savePolicy(bo);
         return R.ok();
+    }
+
+    /** 批量启用或停用限流策略，逐条返回状态校验失败原因。 */
+    @PostMapping("/batch/{action}")
+    @SaCheckPermission("reader:source:list")
+    public R<ReaderBatchActionResult> batchStatus(@PathVariable String action, @RequestBody java.util.List<Long> policyIds) {
+        if (!"enable".equals(action) && !"disable".equals(action)) {
+            throw new IllegalArgumentException("不支持的限流策略批量操作");
+        }
+        return R.ok(sourceService.batchPolicyStatus(policyIds, "enable".equals(action)));
     }
 }

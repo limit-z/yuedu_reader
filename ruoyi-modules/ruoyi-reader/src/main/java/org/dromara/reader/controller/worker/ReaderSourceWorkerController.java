@@ -9,6 +9,7 @@ import org.dromara.reader.domain.bo.ReaderSourceWorkerErrorBo;
 import org.dromara.reader.domain.bo.ReaderSourceWorkerHeartbeatBo;
 import org.dromara.reader.domain.bo.ReaderSourceWorkerPermitBo;
 import org.dromara.reader.domain.bo.ReaderSourceWorkerResultBo;
+import org.dromara.reader.domain.bo.ReaderSourceWorkerBooksBo;
 import org.dromara.reader.domain.vo.worker.ReaderSourceWorkerAckVo;
 import org.dromara.reader.domain.vo.worker.ReaderSourceWorkerPermitVo;
 import org.dromara.reader.domain.vo.worker.ReaderSourceWorkerTaskVo;
@@ -71,6 +72,25 @@ public class ReaderSourceWorkerController {
         bo.setRunId(runId);
         workerService.acceptError(bo);
         return R.ok();
+    }
+
+    /** 接收批量任务发现的来源书籍。 */
+    @PostMapping("/runs/{runId}/books")
+    public R<ReaderSourceWorkerAckVo> books(@RequestHeader("X-Reader-Worker-Secret") String secret,
+                                             @PathVariable Long runId,
+                                             @RequestBody ReaderSourceWorkerBooksBo bo) {
+        verifySecret(secret);
+        bo.setRunId(runId);
+        return R.ok(workerService.acceptBooks(bo));
+    }
+
+    /** 为当前批量运行领取下一本排队书籍。 */
+    @PostMapping("/runs/{runId}/books/claim")
+    public R<ReaderSourceWorkerTaskVo> claimBook(@RequestHeader("X-Reader-Worker-Secret") String secret,
+                                                  @PathVariable Long runId,
+                                                  @RequestBody org.dromara.reader.domain.bo.ReaderSourceWorkerPermitBo bo) {
+        verifySecret(secret);
+        return R.ok(workerService.claimNextBook(runId, bo.getRunToken(), bo.getWorkerId()));
     }
 
     private void verifySecret(String secret) {

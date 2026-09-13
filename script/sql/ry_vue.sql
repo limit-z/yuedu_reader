@@ -248,6 +248,8 @@ insert into sys_menu values(1761400000000000011, '作品管理', 176140000000000
 insert into sys_menu values(1761400000000000012, '导入任务', 1761400000000000010, 2, 'import-task', 'reader-admin/import-task/index', '', 'N', 'Y', 'C', '0', '0', 'reader:import-task:list', 'upload', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '导入任务菜单');
 insert into sys_menu values(1761400000000000013, '内容审核', 1761400000000000010, 3, 'audit', 'reader-admin/audit/index', '', 'N', 'Y', 'C', '0', '0', 'reader:audit:list', 'check', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '内容审核菜单');
 insert into sys_menu values(1761400000000000014, '发布记录', 1761400000000000010, 4, 'publish-log', 'reader-admin/publish-log/index', '', 'N', 'Y', 'C', '0', '0', 'reader:publish-log:list', 'clock', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '发布记录菜单');
+insert into sys_menu values(1761400000000000015, '书源采集中心', 1761400000000000010, 5, 'source-center', 'reader-admin/source-center/index', '', 'N', 'Y', 'C', '0', '0', 'reader:source:list', 'connection', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '书源采集中心菜单');
+insert into sys_menu values(1761400000000000016, '作品分类', 1761400000000000010, 6, 'work-category', 'reader-admin/work-category/index', '', 'N', 'Y', 'C', '0', '0', 'reader:category:list', 'collection-tag', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '作品分类菜单');
 
 -- 三级菜单
 insert into sys_menu values(1761400000000000500, '操作日志', 1761400000000000108, 1, 'operlog', 'monitor/operlog/index', '', 'N', 'Y', 'C', '0', '0', 'monitor:operlog:list', 'form', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '操作日志菜单');
@@ -487,6 +489,8 @@ insert into sys_role_menu values (1761300000000000003, 1761400000000000011);
 insert into sys_role_menu values (1761300000000000003, 1761400000000000012);
 insert into sys_role_menu values (1761300000000000003, 1761400000000000013);
 insert into sys_role_menu values (1761300000000000003, 1761400000000000014);
+insert into sys_role_menu values (1761300000000000003, 1761400000000000015);
+insert into sys_role_menu values (1761300000000000003, 1761400000000000016);
 insert into sys_role_menu values (1761300000000000004, 1761400000000000005);
 insert into sys_role_menu values (1761300000000000004, 1761400000000001500);
 insert into sys_role_menu values (1761300000000000004, 1761400000000001501);
@@ -670,6 +674,7 @@ create table sys_config (
 insert into sys_config values(1761700000000000001, '用户管理-账号初始密码', 'sys.user.initPassword', '123456', 'Y', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '初始化密码 123456');
 insert into sys_config values(1761700000000000002, '账号自助-是否开启用户注册功能', 'sys.account.registerUser', 'false', 'Y', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '是否开启注册用户功能（true开启，false关闭）');
 insert into sys_config values(1761700000000000003, 'OSS预览列表资源开关', 'sys.oss.previewListResource', 'true', 'Y', 1761000000000000103, 1761100000000000001, sysdate(), null, null, 'true:开启, false:关闭');
+insert into sys_config values(1761700000000000004, '阅读器-自动封面全局背景', 'reader.cover.defaultStyle', '{"mode":"COLOR","color":"#FFF4F2"}', 'Y', null, null, sysdate(), null, null, '采集建档和自动封面使用的全局背景配置');
 
 
 -- ----------------------------

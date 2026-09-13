@@ -26,6 +26,8 @@ public class ReaderSourceTaskRun extends BaseEntity {
     private LocalDateTime startedAt;
     private LocalDateTime finishedAt;
     private LocalDateTime heartbeatAt;
+    /** 首次被 Worker 成功领取的时间；为空表示仍在等待领取。 */
+    private LocalDateTime claimedAt;
     private Integer requestCount;
     private Integer successCount;
     private Integer skippedCount;
@@ -34,4 +36,10 @@ public class ReaderSourceTaskRun extends BaseEntity {
     private String circuitOpen;
     private String errorMessage;
     private String resultSummary;
+    /** 本任务的每日额度自动重试序号，手工运行记为0。 */
+    private Integer retryNo;
+    /** 运行触发类型：MANUAL、DAILY_LIMIT。 */
+    private String triggerType;
+    /** 运行触发原因。 */
+    private String triggerReason;
 }

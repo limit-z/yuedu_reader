@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.dromara.reader.domain.vo.admin.ReaderBatchActionResult;
 
 /** 书源解析规则管理接口。 */
 @RestController
@@ -59,5 +60,20 @@ public class ReaderSourceRuleController {
     public R<Void> disable(@PathVariable Long ruleId) {
         sourceService.updateRuleStatus(ruleId, false);
         return R.ok();
+    }
+
+    /** 批量发布或停用解析规则。 */
+    @PostMapping("/batch/{action}")
+    @SaCheckPermission("reader:source:list")
+    public R<ReaderBatchActionResult> batch(@PathVariable String action, @RequestBody java.util.List<Long> ids) {
+        if (!"publish".equals(action) && !"disable".equals(action)) throw new IllegalArgumentException("不支持的规则批量操作");
+        return R.ok(ReaderBatchActionResult.execute(ids, id -> {
+            try {
+                sourceService.updateRuleStatus(id, "publish".equals(action));
+                return null;
+            } catch (Exception ex) {
+                return ex.getMessage();
+            }
+        }));
     }
 }

@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.dromara.reader.domain.vo.admin.ReaderBatchActionResult;
 
 /** 书源站点管理接口。 */
 @RestController
@@ -65,5 +66,20 @@ public class ReaderSourceSiteController {
     public R<Void> disable(@PathVariable Long siteId) {
         sourceService.updateSiteStatus(siteId, false);
         return R.ok();
+    }
+
+    /** 批量启用或停用书源站点。 */
+    @PostMapping("/batch/{action}")
+    @SaCheckPermission("reader:source:list")
+    public R<ReaderBatchActionResult> batch(@PathVariable String action, @RequestBody java.util.List<Long> ids) {
+        if (!"enable".equals(action) && !"disable".equals(action)) throw new IllegalArgumentException("不支持的站点批量操作");
+        return R.ok(ReaderBatchActionResult.execute(ids, id -> {
+            try {
+                sourceService.updateSiteStatus(id, "enable".equals(action));
+                return null;
+            } catch (Exception ex) {
+                return ex.getMessage();
+            }
+        }));
     }
 }

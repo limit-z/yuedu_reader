@@ -1,3 +1,7 @@
+captcha:
+  # 本地开发环境由 dev 配置显式关闭验证码，避免前端配置与服务端校验不一致。
+  enable: false
+
 --- # 监控中心配置
 spring.boot.admin.client:
   # 增加客户端开关
@@ -154,8 +158,8 @@ spring.data:
     port: ${READER_REDIS_PORT:6379}
     # 数据库索引
     database: ${READER_REDIS_DATABASE:0}
-    # redis 密码必须配置
-    password: ${READER_REDIS_PASSWORD:}
+    # 本地无密码时不要声明 password，Redisson 会把空字符串当成 AUTH 密码。
+    # 有密码的环境请通过 SPRING_DATA_REDIS_PASSWORD 注入。
     # 连接超时时间
     timeout: 10s
     # 是否开启ssl

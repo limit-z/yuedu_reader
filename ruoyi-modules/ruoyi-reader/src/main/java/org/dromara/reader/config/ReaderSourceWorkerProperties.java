@@ -13,6 +13,8 @@ public class ReaderSourceWorkerProperties {
     /** Only for an explicitly enabled local Mock source; keep false in production. */
     private boolean allowPrivateForTest = false;
     private int claimLeaseSeconds = 90;
+    /** Heartbeat older than this threshold is considered abandoned and recovered. */
+    private int staleRunSeconds = 180;
     private int maxItemsPerResult = 100;
     private int maxContentBytes = 2 * 1024 * 1024;
 }

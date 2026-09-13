@@ -6,8 +6,15 @@ create table if not exists reader_work (
   work_type varchar(16) not null comment '作品类型：NOVEL小说、COMIC漫画',
   category_name varchar(64) null comment '内容分类：玄幻、言情、修仙等，与作品类型分开',
   title varchar(255) not null comment '作品标题',
+  author_name varchar(128) not null default '未知作者' comment '作品作者，用于作品去重与展示',
+  dedupe_key char(64) not null default '' comment '规范化书名+作者 SHA-256 去重键',
   intro text null comment '作品简介',
   cover_url varchar(500) null comment '作品封面地址',
+  cover_landscape_url varchar(500) null comment '作品横版封面地址，用于宽图推荐位',
+  cover_background_mode varchar(16) not null default 'GLOBAL' comment '自动封面背景模式：GLOBAL继承全局、COLOR背景色、IMAGE背景图片',
+  cover_background_color char(7) null comment '作品级自动封面背景色，格式#RRGGBB',
+  cover_background_oss_id bigint null comment '作品级自动封面背景图片OSS ID',
+  cover_revision int not null default 0 comment '自动封面缓存版本号',
   serial_status varchar(32) not null default 'ONGOING' comment '连载状态：ONGOING连载中、FINISHED已完结',
   publish_status varchar(32) not null default 'DRAFT' comment '发布状态：DRAFT草稿、PUBLISHED已上架、OFFLINE已下架',
   source_type varchar(32) not null default 'IMPORT' comment '内容来源：IMPORT文件导入、SYNC授权同步',
@@ -19,7 +26,22 @@ create table if not exists reader_work (
   create_time datetime null comment '创建时间',
   update_by bigint(20) null comment '更新人',
   update_time datetime null comment '更新时间'
+  ,unique key uk_reader_work_dedupe_key (dedupe_key)
 ) comment='阅读器作品主表';
+
+create table if not exists reader_work_category (
+  id bigint primary key auto_increment comment '作品分类ID',
+  category_name varchar(64) not null comment '分类展示名称：玄幻、言情、修仙等',
+  normalized_name varchar(64) not null comment '规范化分类名称，用于唯一判断',
+  source_type varchar(16) not null default 'MANUAL' comment '分类来源：MANUAL手工、SOURCE书源发现',
+  status char(1) not null default '1' comment '状态：1启用、0停用',
+  create_dept bigint(20) null comment '创建部门',
+  create_by bigint(20) null comment '创建人',
+  create_time datetime null comment '创建时间',
+  update_by bigint(20) null comment '更新人',
+  update_time datetime null comment '更新时间',
+  unique key uk_reader_work_category_normalized (normalized_name)
+) comment='阅读器作品内容分类表';
 
 create table if not exists reader_novel_chapter (
   id bigint primary key auto_increment comment '小说章节ID',
@@ -107,6 +129,8 @@ create table if not exists reader_import_file (
 create table if not exists reader_content_audit (
   id bigint primary key auto_increment comment '审核记录ID',
   work_id bigint not null comment '所属作品ID',
+  source_task_id bigint null comment '关联书源采集任务ID',
+  source_task_book_id bigint null comment '关联书源采集任务书籍明细ID',
   audit_status varchar(32) not null comment '审核状态：PENDING待审核、APPROVED已通过、REJECTED已驳回',
   audit_comment varchar(1000) null comment '审核意见',
   auditor_id bigint null comment '审核人ID',

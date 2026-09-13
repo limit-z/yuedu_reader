@@ -13,6 +13,7 @@ import org.dromara.reader.domain.bo.ReaderSourceDiscoveryBlacklistBo;
 import org.dromara.reader.domain.bo.ReaderSourceDiscoveryCandidateQueryBo;
 import org.dromara.reader.domain.bo.ReaderSourceDiscoveryProviderBo;
 import org.dromara.reader.service.IReaderSourceDiscoveryService;
+import org.dromara.reader.domain.vo.admin.ReaderBatchActionResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -68,6 +69,20 @@ public class ReaderSourceDiscoveryController {
         return R.ok();
     }
 
+    /** 批量启用或停用发现源。 */
+    @PostMapping("/providers/batch/{action}")
+    public R<ReaderBatchActionResult> batchProviders(@PathVariable String action, @RequestBody java.util.List<Long> ids) {
+        if (!"enable".equals(action) && !"disable".equals(action)) throw new IllegalArgumentException("不支持的发现源批量操作");
+        return R.ok(ReaderBatchActionResult.execute(ids, id -> {
+            try {
+                discoveryService.updateProviderStatus(id, "enable".equals(action));
+                return null;
+            } catch (Exception ex) {
+                return ex.getMessage();
+            }
+        }));
+    }
+
     @GetMapping("/blacklist")
     public R<PageResult<ReaderSourceDiscoveryBlacklist>> blacklist(@RequestParam(required = false) String matcherType,
                                                                      @RequestParam(required = false) String status,
@@ -105,28 +120,61 @@ public class ReaderSourceDiscoveryController {
         return R.ok();
     }
 
+    /** 批量启用、停用或删除黑名单。 */
+    @PostMapping("/blacklist/batch/{action}")
+    public R<ReaderBatchActionResult> batchBlacklist(@PathVariable String action, @RequestBody java.util.List<Long> ids) {
+        if (!java.util.List.of("enable", "disable", "delete").contains(action)) throw new IllegalArgumentException("不支持的黑名单批量操作");
+        return R.ok(ReaderBatchActionResult.execute(ids, id -> {
+            try {
+                if ("delete".equals(action)) discoveryService.deleteBlacklist(id);
+                else discoveryService.updateBlacklistStatus(id, "enable".equals(action));
+                return null;
+            } catch (Exception ex) {
+                return ex.getMessage();
+            }
+        }));
+    }
+
     @GetMapping("/candidates")
     public R<PageResult<ReaderSourceDiscoveryCandidate>> candidates(ReaderSourceDiscoveryCandidateQueryBo bo,
                                                                       PageQuery pageQuery) {
         return R.ok(discoveryService.queryCandidatePage(bo, pageQuery));
     }
 
-    @PostMapping("/candidates/{candidateId}/check")
+    @PostMapping("/candidates/{candidateId:\\d+}/check")
     public R<Void> checkCandidate(@PathVariable Long candidateId) {
         discoveryService.checkCandidate(candidateId);
         return R.ok();
     }
 
-    @PostMapping("/candidates/{candidateId}/approve")
+    @PostMapping("/candidates/{candidateId:\\d+}/approve")
     public R<Void> approveCandidate(@PathVariable Long candidateId) {
         discoveryService.approveCandidate(candidateId);
         return R.ok();
     }
 
-    @PostMapping("/candidates/{candidateId}/reject")
+    @PostMapping("/candidates/{candidateId:\\d+}/reject")
     public R<Void> rejectCandidate(@PathVariable Long candidateId, @RequestParam(required = false) String reason) {
         discoveryService.rejectCandidate(candidateId, reason);
         return R.ok();
+    }
+
+    /** 批量检查、通过或拒绝候选地址。 */
+    @PostMapping("/candidates/batch/{action}")
+    public R<ReaderBatchActionResult> batchCandidates(@PathVariable String action,
+                                                       @RequestBody java.util.List<Long> ids,
+                                                       @RequestParam(required = false) String reason) {
+        if (!java.util.List.of("check", "approve", "reject").contains(action)) throw new IllegalArgumentException("不支持的候选批量操作");
+        return R.ok(ReaderBatchActionResult.execute(ids, id -> {
+            try {
+                if ("check".equals(action)) discoveryService.checkCandidate(id);
+                else if ("approve".equals(action)) discoveryService.approveCandidate(id);
+                else discoveryService.rejectCandidate(id, reason);
+                return null;
+            } catch (Exception ex) {
+                return ex.getMessage();
+            }
+        }));
     }
 
     @GetMapping("/runs")

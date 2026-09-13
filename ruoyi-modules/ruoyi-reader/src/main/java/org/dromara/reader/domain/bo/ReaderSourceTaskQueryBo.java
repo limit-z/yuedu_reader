@@ -14,4 +14,6 @@ public class ReaderSourceTaskQueryBo implements Serializable {
     private Long siteId;
     private String executorType;
     private String status;
+    /** 采集模式筛选。 */
+    private String collectionMode;
 }

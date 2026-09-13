@@ -165,14 +165,17 @@ CREATE TABLE IF NOT EXISTS reader_source_error (
 INSERT INTO sys_menu
   (menu_id, menu_name, parent_id, order_num, path, component, query_param, is_frame, is_cache, menu_type,
    visible, status, perms, icon, create_dept, create_by, create_time, update_by, update_time, remark)
-SELECT 1761400000000015000, '书源采集中心', 1761400000000000010, 5, 'source-center',
+SELECT 1761400000000000015, '书源采集中心', 1761400000000000010, 5, 'source-center',
        'reader-admin/source-center/index', '', 'N', 'Y', 'C', '0', '0', 'reader:source:list',
        'connection', 1761000000000000103, 1761100000000000001, sysdate(), NULL, NULL, '书源采集中心菜单'
-WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_id = 1761400000000015000);
+WHERE NOT EXISTS (
+  SELECT 1 FROM sys_menu
+  WHERE parent_id = 1761400000000000010 AND path = 'source-center'
+);
 
 INSERT INTO sys_role_menu (role_id, menu_id)
-SELECT 1761300000000000003, 1761400000000015000
+SELECT 1761300000000000003, 1761400000000000015
 WHERE NOT EXISTS (
   SELECT 1 FROM sys_role_menu
-  WHERE role_id = 1761300000000000003 AND menu_id = 1761400000000015000
+  WHERE role_id = 1761300000000000003 AND menu_id = 1761400000000000015
 );

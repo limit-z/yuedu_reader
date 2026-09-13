@@ -111,14 +111,21 @@ security:
     - /warm-flow-ui/config
     - /snail-chat/**
     - /api/snail/chat/**
+    - /reader/app/covers/**
 
 # 书源采集 Worker 内部协议。生产环境必须通过环境变量注入共享密钥。
 reader:
+  cover:
+    storage-path: ${READER_COVER_STORAGE_PATH:./data/reader-covers}
+    public-path: /reader/app/covers
+    crawler:
+      scheduler-interval-ms: ${READER_COVER_CRAWLER_INTERVAL_MS:10000}
   source:
     worker:
       shared-secret: ${READER_SOURCE_WORKER_SECRET:}
       allow-private-for-test: ${READER_SOURCE_ALLOW_PRIVATE_FOR_TEST:false}
       claim-lease-seconds: ${READER_SOURCE_WORKER_CLAIM_LEASE_SECONDS:90}
+      stale-run-seconds: ${READER_SOURCE_WORKER_STALE_RUN_SECONDS:180}
       max-items-per-result: ${READER_SOURCE_WORKER_MAX_ITEMS_PER_RESULT:100}
       max-content-bytes: ${READER_SOURCE_WORKER_MAX_CONTENT_BYTES:2097152}
 

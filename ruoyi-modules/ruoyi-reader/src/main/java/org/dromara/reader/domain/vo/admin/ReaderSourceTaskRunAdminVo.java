@@ -20,6 +20,7 @@ public class ReaderSourceTaskRunAdminVo implements Serializable {
     private LocalDateTime startedAt;
     private LocalDateTime finishedAt;
     private LocalDateTime heartbeatAt;
+    private LocalDateTime claimedAt;
     private Integer requestCount;
     private Integer successCount;
     private Integer skippedCount;
@@ -28,6 +29,9 @@ public class ReaderSourceTaskRunAdminVo implements Serializable {
     private String circuitOpen;
     private String errorMessage;
     private String resultSummary;
+    private Integer retryNo;
+    private String triggerType;
+    private String triggerReason;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 }
