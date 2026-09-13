@@ -28,6 +28,7 @@ import org.dromara.reader.mapper.ReaderNovelChapterContentMapper;
 import org.dromara.reader.mapper.ReaderReadingProgressMapper;
 import org.dromara.reader.mapper.ReaderWorkMapper;
 import org.dromara.reader.service.cache.ReaderWorkCacheService;
+import org.dromara.reader.service.impl.ReaderCoverService;
 import org.dromara.reader.service.impl.ReaderAppContentServiceImpl;
 import org.dromara.reader.service.ReaderVisitorAccountService;
 import org.dromara.reader.support.ReaderAllEnvTest;
@@ -73,6 +74,8 @@ class ReaderAppContentServiceTest {
     private ReaderReadingProgressMapper readerReadingProgressMapper;
     @Mock
     private ReaderVisitorAccountService visitorAccountService;
+    @Mock
+    private ReaderCoverService readerCoverService;
 
     @InjectMocks
     private ReaderAppContentServiceImpl service;

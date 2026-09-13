@@ -29,6 +29,8 @@ public class ReaderWorkBo implements Serializable {
      * 内容分类，如玄幻、言情、修仙；与小说/漫画作品类型分开。
      */
     private String categoryName;
+    /** 作品作者，用于和标题组成唯一去重键。 */
+    private String authorName;
     /**
      * 标题。
      */
@@ -41,4 +43,11 @@ public class ReaderWorkBo implements Serializable {
      * 封面地址。
      */
     private String coverUrl;
+    /**
+     * 横版封面地址。
+     */
+    private String coverLandscapeUrl;
+    private String coverBackgroundMode;
+    private String coverBackgroundColor;
+    private Long coverBackgroundOssId;
 }

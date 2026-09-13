@@ -17,9 +17,29 @@ public class AppWorkCardVo {
      */
     private String title;
     /**
+     * 作者。
+     */
+    private String authorName;
+    /**
      * 封面地址。
      */
     private String coverUrl;
+    /**
+     * 横版封面地址。
+     */
+    private String coverLandscapeUrl;
+    /**
+     * 封面背景模式：GLOBAL、COLOR、IMAGE。
+     */
+    private String coverBackgroundMode;
+    /**
+     * 作品级封面背景色。
+     */
+    private String coverBackgroundColor;
+    /**
+     * 作品级封面背景图片地址。
+     */
+    private String coverBackgroundImageUrl;
     /**
      * 简介内容。
      */
@@ -32,6 +52,10 @@ public class AppWorkCardVo {
      * 内容分类，如玄幻、言情、修仙；与作品类型分开。
      */
     private String categoryName;
+    /**
+     * 连载状态：ONGOING、FINISHED。
+     */
+    private String serialStatus;
     /**
      * 发布状态。
      */

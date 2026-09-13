@@ -18,6 +18,9 @@ import org.dromara.reader.job.ReaderPublishRefreshJob;
 import org.dromara.reader.mapper.ReaderComicChapterMapper;
 import org.dromara.reader.mapper.ReaderContentAuditMapper;
 import org.dromara.reader.mapper.ReaderNovelChapterMapper;
+import org.dromara.reader.mapper.ReaderSourceChapterSnapshotMapper;
+import org.dromara.reader.mapper.ReaderSourceTaskBookMapper;
+import org.dromara.reader.mapper.ReaderSourceTaskMapper;
 import org.dromara.reader.mapper.ReaderWorkMapper;
 import org.dromara.reader.service.impl.ReaderAuditServiceImpl;
 import org.dromara.reader.support.ReaderAllEnvTest;
@@ -51,6 +54,12 @@ public class ReaderAuditServiceTest {
     private ReaderComicChapterMapper comicChapterMapper;
     @Mock
     private ReaderPublishRefreshJob publishRefreshJob;
+    @Mock
+    private ReaderSourceChapterSnapshotMapper snapshotMapper;
+    @Mock
+    private ReaderSourceTaskMapper sourceTaskMapper;
+    @Mock
+    private ReaderSourceTaskBookMapper sourceTaskBookMapper;
 
     @InjectMocks
     private ReaderAuditServiceImpl service;

@@ -11,10 +11,12 @@ import org.dromara.common.core.exception.ServiceException;
 import org.dromara.reader.domain.ReaderAccountBind;
 import org.dromara.reader.domain.ReaderHomeBanner;
 import org.dromara.reader.domain.ReaderHomeNotice;
+import org.dromara.reader.domain.ReaderRanking;
 import org.dromara.reader.domain.ReaderTopic;
 import org.dromara.reader.domain.ReaderTopicWork;
 import org.dromara.reader.domain.ReaderUserMessage;
 import org.dromara.reader.domain.ReaderWork;
+import org.dromara.reader.domain.ReaderWorkCategory;
 import org.dromara.reader.domain.ReaderUserProfile;
 import org.dromara.reader.domain.ReaderVisitorAccount;
 import org.dromara.reader.domain.bo.ReaderProfileUpdateBo;
@@ -39,6 +41,8 @@ import org.dromara.reader.mapper.ReaderTopicWorkMapper;
 import org.dromara.reader.mapper.ReaderUserMessageMapper;
 import org.dromara.reader.mapper.ReaderVisitorAccountMapper;
 import org.dromara.reader.mapper.ReaderWorkMapper;
+import org.dromara.reader.mapper.ReaderWorkCategoryMapper;
+import org.dromara.reader.mapper.ReaderRankingMapper;
 import org.dromara.reader.service.IReaderPortalService;
 import org.dromara.reader.service.IReaderPointsService;
 import org.dromara.reader.service.ReaderVisitorAccountService;
@@ -69,6 +73,12 @@ public class ReaderPortalServiceImpl implements IReaderPortalService {
      * 作品主表访问入口，负责首页、发现页、搜索页的作品数据来源。
      */
     private final ReaderWorkMapper readerWorkMapper;
+
+    /** 作品分类字典访问入口，保证发现页展示全量启用分类。 */
+    private final ReaderWorkCategoryMapper readerWorkCategoryMapper;
+
+    /** 榜单配置访问入口，保证发现页与书城使用同一套动态榜单。 */
+    private final ReaderRankingMapper readerRankingMapper;
 
     /**
      * 首页公告访问入口，负责书城滚动公告配置查询。
@@ -141,15 +151,19 @@ public class ReaderPortalServiceImpl implements IReaderPortalService {
     public AppDiscoverConfigVo getDiscoverConfig() {
         List<ReaderWork> works = loadPublishedWorks();
         AppDiscoverConfigVo vo = new AppDiscoverConfigVo();
-        // P0 先用静态分类和榜单占位，等运营配置表到位后再替换成动态数据。
-        vo.setCategories(buildItems(List.of(
-            Map.entry(1L, "小说"),
-            Map.entry(2L, "漫画")
-        )));
-        vo.setRankings(buildItems(List.of(
-            Map.entry(1L, "最近更新"),
-            Map.entry(2L, "最新上架")
-        )));
+        vo.setCategories(buildCategoryItems(works));
+        vo.setRankings(readerRankingMapper.selectList(Wrappers.<ReaderRanking>lambdaQuery()
+                .eq(ReaderRanking::getStatus, "1")
+                .orderByAsc(ReaderRanking::getSortNo)
+                .orderByAsc(ReaderRanking::getId))
+            .stream()
+            .map(ranking -> {
+                AppDiscoverConfigVo.Item item = new AppDiscoverConfigVo.Item();
+                item.setId(ranking.getId());
+                item.setName(ranking.getRankingName());
+                return item;
+            })
+            .toList());
         vo.setHotKeywords(works.stream()
             .map(ReaderWork::getTitle)
             .filter(StrUtil::isNotBlank)
@@ -499,10 +513,13 @@ public class ReaderPortalServiceImpl implements IReaderPortalService {
         AppWorkCardVo vo = new AppWorkCardVo();
         vo.setWorkId(work.getId());
         vo.setTitle(work.getTitle());
+        vo.setAuthorName(work.getAuthorName());
         vo.setCoverUrl(work.getCoverUrl());
+        vo.setCoverLandscapeUrl(work.getCoverLandscapeUrl());
         vo.setIntro(work.getIntro());
         vo.setWorkType(work.getWorkType());
         vo.setCategoryName(work.getCategoryName());
+        vo.setSerialStatus(work.getSerialStatus());
         vo.setPublishStatus(work.getPublishStatus());
         vo.setTotalChapters(work.getTotalChapters());
         vo.setTotalPages(work.getTotalPages());
@@ -594,6 +611,35 @@ public class ReaderPortalServiceImpl implements IReaderPortalService {
             item.setName(entry.getValue());
             return item;
         }).toList();
+    }
+
+    /** 返回分类字典与已发布作品分类的并集，避免首页只加载首批作品导致分类缺失。 */
+    private List<AppDiscoverConfigVo.Item> buildCategoryItems(List<ReaderWork> works) {
+        Map<String, AppDiscoverConfigVo.Item> result = new LinkedHashMap<>();
+        List<ReaderWorkCategory> categories = readerWorkCategoryMapper.selectList(Wrappers.<ReaderWorkCategory>lambdaQuery()
+            .eq(ReaderWorkCategory::getStatus, "1")
+            .orderByAsc(ReaderWorkCategory::getCategoryName));
+        categories.forEach(category -> {
+            if (StrUtil.isBlank(category.getCategoryName())) return;
+            AppDiscoverConfigVo.Item item = new AppDiscoverConfigVo.Item();
+            item.setId(category.getId());
+            item.setName(category.getCategoryName());
+            result.put(category.getNormalizedName(), item);
+        });
+        works.stream()
+            .map(ReaderWork::getCategoryName)
+            .filter(StrUtil::isNotBlank)
+            .map(String::trim)
+            .distinct()
+            .forEach(name -> result.putIfAbsent(name.replaceAll("\\s+", " ").toLowerCase(), categoryItem(-result.size() - 1L, name)));
+        return result.values().stream().toList();
+    }
+
+    private AppDiscoverConfigVo.Item categoryItem(Long id, String name) {
+        AppDiscoverConfigVo.Item item = new AppDiscoverConfigVo.Item();
+        item.setId(id);
+        item.setName(name);
+        return item;
     }
 
     /**

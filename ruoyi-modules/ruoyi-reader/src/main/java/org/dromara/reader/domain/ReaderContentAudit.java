@@ -29,6 +29,10 @@ public class ReaderContentAudit extends BaseEntity {
      * 作品ID。
      */
     private Long workId;
+    /** 关联的书源采集任务。 */
+    private Long sourceTaskId;
+    /** 关联的书源采集任务书籍明细。 */
+    private Long sourceTaskBookId;
     /**
      * 审核状态。
      */

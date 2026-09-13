@@ -56,6 +56,7 @@ class ReaderRankingControllerTest {
         AppWorkCardVo cardVo = new AppWorkCardVo();
         cardVo.setWorkId(1L);
         cardVo.setTitle("三体");
+        cardVo.setSerialStatus("FINISHED");
         AppPageVo<AppWorkCardVo> pageVo = new AppPageVo<>();
         pageVo.setList(List.of(cardVo));
         pageVo.setTotal(1L);
@@ -69,6 +70,7 @@ class ReaderRankingControllerTest {
                 .param("pageSize", "20"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.code").value(200))
-            .andExpect(jsonPath("$.data.list[0].title").value("三体"));
+            .andExpect(jsonPath("$.data.list[0].title").value("三体"))
+            .andExpect(jsonPath("$.data.list[0].serialStatus").value("FINISHED"));
     }
 }

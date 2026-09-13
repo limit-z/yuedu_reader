@@ -22,4 +22,13 @@ public class AppRankingVo {
      * 榜单说明。
      */
     private String rankingDesc;
+
+    /** 榜单模式：AUTO自动、MANUAL手工。 */
+    private String rankingMode;
+
+    /** 自动榜单排序规则。 */
+    private String sortRule;
+
+    /** 展示顺序。 */
+    private Integer sortNo;
 }

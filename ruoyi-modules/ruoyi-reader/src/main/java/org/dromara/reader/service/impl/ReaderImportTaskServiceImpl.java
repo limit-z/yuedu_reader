@@ -21,6 +21,7 @@ import org.dromara.reader.domain.ReaderWork;
 import org.dromara.reader.domain.bo.ReaderImportTaskBo;
 import org.dromara.reader.domain.bo.ReaderImportTaskQueryBo;
 import org.dromara.reader.domain.vo.admin.ReaderImportTaskAdminVo;
+import org.dromara.reader.domain.vo.admin.ReaderBatchActionResult;
 import org.dromara.reader.enums.ImportTaskStatus;
 import org.dromara.reader.enums.PublishStatus;
 import org.dromara.reader.enums.ReadingContentType;
@@ -47,8 +48,11 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.HexFormat;
 import java.util.List;
+import java.util.Objects;
 import java.util.Locale;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.zip.ZipEntry;
@@ -191,6 +195,54 @@ public class ReaderImportTaskServiceImpl implements IReaderImportTaskService {
     }
 
     /**
+     * 批量取消或重试解析任务，逐条校验状态并保留失败原因。
+     */
+    @Override
+    public ReaderBatchActionResult batchAction(List<Long> taskIds, String action) {
+        return ReaderBatchActionResult.execute(taskIds, taskId -> {
+            ReaderImportTask task = importTaskMapper.selectById(taskId);
+            if (task == null) {
+                return "导入任务不存在";
+            }
+            if ("cancel".equals(action)) {
+                if (ImportTaskStatus.CANCELED.name().equals(task.getStatus())) {
+                    return "任务已经取消";
+                }
+                if (ImportTaskStatus.PENDING_REVIEW.name().equals(task.getStatus())
+                    || ImportTaskStatus.COMPLETED.name().equals(task.getStatus())) {
+                    return "任务已完成，不能取消";
+                }
+                ReaderImportTask canceled = new ReaderImportTask();
+                canceled.setId(taskId);
+                canceled.setStatus(ImportTaskStatus.CANCELED.name());
+                canceled.setProgressMessage("已批量取消");
+                canceled.setFailReason(null);
+                importTaskMapper.updateById(canceled);
+                return null;
+            }
+            if (!ImportTaskStatus.PARSE_FAILED.name().equals(task.getStatus())
+                && !ImportTaskStatus.CANCELED.name().equals(task.getStatus())) {
+                return "仅解析失败或已取消的任务可以重试";
+            }
+            ReaderImportTask retryTask = new ReaderImportTask();
+            retryTask.setId(taskId);
+            retryTask.setStatus(ImportTaskStatus.CREATED.name());
+            retryTask.setFailReason(null);
+            retryTask.setProgressPercent(0);
+            retryTask.setProcessedUnits(0);
+            retryTask.setProgressMessage("已批量加入解析队列");
+            importTaskMapper.updateById(retryTask);
+            task.setStatus(ImportTaskStatus.CREATED.name());
+            task.setFailReason(null);
+            task.setProgressPercent(0);
+            task.setProcessedUnits(0);
+            task.setProgressMessage("已批量加入解析队列");
+            scheduledExecutorService.execute(() -> processImportTask(task));
+            return null;
+        });
+    }
+
+    /**
      * 构造导入任务分页查询条件。
      */
     private LambdaQueryWrapper<ReaderImportTask> buildQueryWrapper(ReaderImportTaskQueryBo bo) {
@@ -264,6 +316,8 @@ public class ReaderImportTaskServiceImpl implements IReaderImportTaskService {
         work.setWorkType(task.getContentType());
         work.setCategoryName(task.getCategoryName());
         work.setTitle(title);
+        work.setAuthorName("未知作者");
+        work.setDedupeKey(buildDedupeKey(title, work.getAuthorName()));
         work.setIntro("由文件导入生成的草稿内容");
         work.setCoverUrl(resolveCoverUrl(task.getCoverOssId()));
         work.setPublishStatus(PublishStatus.DRAFT.name());
@@ -273,6 +327,20 @@ public class ReaderImportTaskServiceImpl implements IReaderImportTaskService {
         work.setTotalChapters(0);
         work.setTotalPages(0);
         return work;
+    }
+
+    private String buildDedupeKey(String title, String author) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            String source = normalizeDedupeText(title) + "\u0000" + normalizeDedupeText(author);
+            return HexFormat.of().formatHex(digest.digest(source.getBytes(StandardCharsets.UTF_8)));
+        } catch (Exception ex) {
+            throw new IllegalStateException("无法生成作品去重键", ex);
+        }
+    }
+
+    private String normalizeDedupeText(String value) {
+        return value == null ? "" : value.trim().replaceAll("\\s+", " ").toLowerCase(Locale.ROOT);
     }
 
     /**
@@ -562,9 +630,15 @@ public class ReaderImportTaskServiceImpl implements IReaderImportTaskService {
      * 后台执行导入任务解析。
      */
     private void processImportTask(ReaderImportTask task) {
+        if (isCanceled(task.getId())) {
+            return;
+        }
         updateTaskProgress(task.getId(), ImportTaskStatus.PARSING, 0, 0, "开始解析导入文件");
         try {
             transactionTemplate.executeWithoutResult(status -> handleImportedFile(task));
+            if (isCanceled(task.getId())) {
+                return;
+            }
             ReaderImportTask finalTask = new ReaderImportTask();
             finalTask.setId(task.getId());
             finalTask.setStatus(ImportTaskStatus.PENDING_REVIEW.name());
@@ -572,6 +646,9 @@ public class ReaderImportTaskServiceImpl implements IReaderImportTaskService {
             finalTask.setProgressMessage("导入完成，等待审核");
             importTaskMapper.updateById(finalTask);
         } catch (Exception ex) {
+            if (isCanceled(task.getId())) {
+                return;
+            }
             String failReason = buildFailReason(ex);
             log.warn("导入任务处理失败, taskId={}, reason={}", task.getId(), failReason, ex);
             ReaderImportTask failedTask = new ReaderImportTask();
@@ -581,6 +658,14 @@ public class ReaderImportTaskServiceImpl implements IReaderImportTaskService {
             failedTask.setProgressMessage("导入失败");
             importTaskMapper.updateById(failedTask);
         }
+    }
+
+    /**
+     * 异步解析完成前检查任务是否已被管理端取消，避免取消后又被后台线程覆盖状态。
+     */
+    private boolean isCanceled(Long taskId) {
+        ReaderImportTask current = importTaskMapper.selectById(taskId);
+        return current != null && Objects.equals(current.getStatus(), ImportTaskStatus.CANCELED.name());
     }
 
     /**

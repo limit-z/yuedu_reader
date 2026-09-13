@@ -19,9 +19,29 @@ public class AppWorkDetailVo {
      */
     private String title;
     /**
+     * 作者。
+     */
+    private String authorName;
+    /**
      * 封面地址。
      */
     private String coverUrl;
+    /**
+     * 横版封面地址。
+     */
+    private String coverLandscapeUrl;
+    /**
+     * 封面背景模式：GLOBAL、COLOR、IMAGE。
+     */
+    private String coverBackgroundMode;
+    /**
+     * 作品级封面背景色。
+     */
+    private String coverBackgroundColor;
+    /**
+     * 作品级封面背景图片地址。
+     */
+    private String coverBackgroundImageUrl;
     /**
      * 简介内容。
      */

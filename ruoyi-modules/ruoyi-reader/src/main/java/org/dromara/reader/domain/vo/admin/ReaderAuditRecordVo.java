@@ -23,6 +23,10 @@ public class ReaderAuditRecordVo implements Serializable {
      * 作品ID。
      */
     private Long workId;
+    /** 来源采集任务ID。 */
+    private Long sourceTaskId;
+    /** 来源采集书籍明细ID。 */
+    private Long sourceTaskBookId;
     /**
      * 作品标题。
      */

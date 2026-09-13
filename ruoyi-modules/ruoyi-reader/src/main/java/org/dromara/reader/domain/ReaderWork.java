@@ -34,6 +34,14 @@ public class ReaderWork extends BaseEntity {
      */
     private String categoryName;
     /**
+     * 作品作者，用于与标题一起生成稳定去重键。
+     */
+    private String authorName;
+    /**
+     * 规范化标题和作者的 SHA-256 去重键。
+     */
+    private String dedupeKey;
+    /**
      * 标题。
      */
     private String title;
@@ -45,6 +53,18 @@ public class ReaderWork extends BaseEntity {
      * 封面地址。
      */
     private String coverUrl;
+    /**
+     * 横版封面地址，用于首页推荐等宽图场景。
+     */
+    private String coverLandscapeUrl;
+    /** 封面背景模式：GLOBAL、COLOR、IMAGE。 */
+    private String coverBackgroundMode;
+    /** 作品级封面背景色。 */
+    private String coverBackgroundColor;
+    /** 作品级封面背景图片 OSS ID。 */
+    private Long coverBackgroundOssId;
+    /** 自动封面版本号，用于刷新浏览器缓存。 */
+    private Integer coverRevision;
     /**
      * 连载状态。
      */

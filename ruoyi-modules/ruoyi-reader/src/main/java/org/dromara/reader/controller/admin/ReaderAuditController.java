@@ -6,11 +6,13 @@ import org.dromara.common.core.domain.R;
 import org.dromara.common.mybatis.core.page.PageQuery;
 import org.dromara.reader.domain.bo.ReaderAuditQueryBo;
 import org.dromara.reader.domain.vo.admin.ReaderAuditRecordVo;
+import org.dromara.reader.domain.vo.admin.ReaderBatchActionResult;
 import org.dromara.reader.service.IReaderAuditService;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -41,5 +43,18 @@ public class ReaderAuditController {
     public R<Void> approve(@PathVariable Long auditId) {
         readerAuditService.approve(auditId);
         return R.ok();
+    }
+
+    /** 批量审核通过，逐条返回无法处理的记录及原因。 */
+    @PostMapping("/batch/approve")
+    public R<ReaderBatchActionResult> batchApprove(@RequestBody java.util.List<Long> auditIds) {
+        return R.ok(ReaderBatchActionResult.execute(auditIds, auditId -> {
+            try {
+                readerAuditService.approve(auditId);
+                return null;
+            } catch (Exception ex) {
+                return ex.getMessage();
+            }
+        }));
     }
 }

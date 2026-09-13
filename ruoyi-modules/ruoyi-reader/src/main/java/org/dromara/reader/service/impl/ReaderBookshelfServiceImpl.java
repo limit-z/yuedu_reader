@@ -257,6 +257,7 @@ public class ReaderBookshelfServiceImpl implements IReaderBookshelfService {
         vo.setWorkId(work.getId());
         vo.setTitle(work.getTitle());
         vo.setCoverUrl(work.getCoverUrl());
+        vo.setCoverLandscapeUrl(work.getCoverLandscapeUrl());
         vo.setWorkType(work.getWorkType());
         vo.setTopPin("1".equals(bookshelf.getTopPin()));
         vo.setSortNo(bookshelf.getSortNo());

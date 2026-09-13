@@ -8,10 +8,13 @@ import org.dromara.reader.domain.bo.ReaderFeedbackQueryBo;
 import org.dromara.reader.domain.bo.ReaderFeedbackReplyBo;
 import org.dromara.reader.domain.bo.ReaderFeedbackStatusBo;
 import org.dromara.reader.domain.vo.admin.ReaderFeedbackAdminVo;
+import org.dromara.reader.domain.vo.admin.ReaderBatchActionResult;
+import org.dromara.reader.domain.bo.ReaderBatchStatusBo;
 import org.dromara.reader.service.IReaderFeedbackService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -53,5 +56,20 @@ public class ReaderFeedbackAdminController {
     public R<Void> status(@PathVariable Long feedbackId, @RequestBody ReaderFeedbackStatusBo bo) {
         readerFeedbackService.updateStatus(feedbackId, bo);
         return R.ok();
+    }
+
+    /** 批量更新工单状态，失败项会保留原始业务错误。 */
+    @PostMapping("/batch/status")
+    public R<ReaderBatchActionResult> batchStatus(@RequestBody ReaderBatchStatusBo bo) {
+        ReaderFeedbackStatusBo statusBo = new ReaderFeedbackStatusBo();
+        statusBo.setStatus(bo.getStatus());
+        return R.ok(ReaderBatchActionResult.execute(bo.getIds(), feedbackId -> {
+            try {
+                readerFeedbackService.updateStatus(feedbackId, statusBo);
+                return null;
+            } catch (Exception ex) {
+                return ex.getMessage();
+            }
+        }));
     }
 }

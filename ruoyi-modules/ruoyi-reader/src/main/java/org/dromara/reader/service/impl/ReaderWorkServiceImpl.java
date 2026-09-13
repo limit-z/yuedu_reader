@@ -16,12 +16,14 @@ import org.dromara.reader.domain.ReaderNovelChapter;
 import org.dromara.reader.domain.ReaderNovelChapterContent;
 import org.dromara.reader.domain.ReaderWork;
 import org.dromara.reader.domain.bo.ReaderWorkBo;
+import org.dromara.reader.domain.bo.ReaderCoverStyleBo;
 import org.dromara.reader.domain.bo.ReaderWorkQueryBo;
 import org.dromara.reader.domain.vo.ReaderWorkVo;
 import org.dromara.reader.domain.vo.admin.ReaderCatalogAdminVo;
 import org.dromara.reader.domain.vo.admin.ReaderComicChapterAdminVo;
 import org.dromara.reader.domain.vo.admin.ReaderNovelChapterAdminVo;
 import org.dromara.reader.domain.vo.admin.ReaderWorkDetailAdminVo;
+import org.dromara.reader.domain.vo.admin.ReaderCoverStyleVo;
 import org.dromara.reader.enums.PublishStatus;
 import org.dromara.reader.enums.WorkType;
 import org.dromara.reader.job.ReaderPublishRefreshJob;
@@ -31,11 +33,16 @@ import org.dromara.reader.mapper.ReaderContentAuditMapper;
 import org.dromara.reader.mapper.ReaderNovelChapterMapper;
 import org.dromara.reader.mapper.ReaderNovelChapterContentMapper;
 import org.dromara.reader.mapper.ReaderWorkMapper;
+import org.dromara.reader.mapper.ReaderSourceChapterSnapshotMapper;
 import org.dromara.reader.service.IReaderWorkService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.util.HexFormat;
+import java.util.Locale;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -81,6 +88,11 @@ public class ReaderWorkServiceImpl implements IReaderWorkService {
      */
     private final ReaderPublishRefreshJob publishRefreshJob;
 
+    /** 缺图作品的自动封面生成服务。 */
+    private final ReaderCoverService readerCoverService;
+
+    private final ReaderSourceChapterSnapshotMapper sourceChapterSnapshotMapper;
+
     /**
      * 创建作品草稿。
      */
@@ -109,7 +121,13 @@ public class ReaderWorkServiceImpl implements IReaderWorkService {
         if (work.getWorkType() == null) {
             work.setWorkType(WorkType.NOVEL.name());
         }
+        if (work.getAuthorName() == null || work.getAuthorName().isBlank()) {
+            work.setAuthorName("未知作者");
+        }
+        work.setAuthorName(work.getAuthorName().trim());
+        work.setDedupeKey(buildDedupeKey(work.getTitle(), work.getAuthorName()));
         readerWorkMapper.insert(work);
+        readerCoverService.ensureGeneratedCover(work);
         return work.getId();
     }
 
@@ -274,6 +292,49 @@ public class ReaderWorkServiceImpl implements IReaderWorkService {
         publishRefreshJob.execute(workId);
     }
 
+    @Override
+    public int backfillMissingCovers() {
+        return readerCoverService.backfillMissingCovers();
+    }
+
+    @Override
+    public ReaderCoverStyleVo queryGlobalCoverStyle() {
+        return readerCoverService.queryGlobalStyle();
+    }
+
+    @Override
+    public int updateGlobalCoverStyle(ReaderCoverStyleBo bo) {
+        return readerCoverService.updateGlobalStyle(bo);
+    }
+
+    @Override
+    public void updateWorkCoverStyle(Long workId, ReaderCoverStyleBo bo) {
+        readerCoverService.updateWorkStyle(requireWork(workId), bo);
+        publishRefreshJob.execute(workId);
+    }
+
+    @Override
+    public int reformatNovelContents() {
+        int changed = 0;
+        for (ReaderNovelChapterContent content : novelChapterContentMapper.selectList(Wrappers.lambdaQuery())) {
+            String formatted = ReaderNovelTextFormatter.format(content.getContent());
+            if (!formatted.equals(content.getContent())) {
+                content.setContent(formatted);
+                novelChapterContentMapper.updateById(content);
+                changed++;
+            }
+        }
+        sourceChapterSnapshotMapper.selectList(Wrappers.lambdaQuery()).forEach(snapshot -> {
+            String formatted = ReaderNovelTextFormatter.format(snapshot.getContent());
+            if (!formatted.equals(snapshot.getContent())) {
+                snapshot.setContent(formatted);
+                snapshot.setContentHash(sha256(formatted));
+                sourceChapterSnapshotMapper.updateById(snapshot);
+            }
+        });
+        return changed;
+    }
+
     /**
      * 校验作品是否存在。
      */
@@ -283,6 +344,31 @@ public class ReaderWorkServiceImpl implements IReaderWorkService {
             throw new ServiceException("作品不存在");
         }
         return work;
+    }
+
+    /** 统一生成标题加作者的规范化 SHA-256 去重键。 */
+    private String buildDedupeKey(String title, String author) {
+        String normalizedTitle = normalizeText(title);
+        String normalizedAuthor = normalizeText(author == null || author.isBlank() ? "未知作者" : author);
+        try {
+            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")
+                .digest((normalizedTitle + "\u0000" + normalizedAuthor).getBytes(StandardCharsets.UTF_8)));
+        } catch (Exception ex) {
+            throw new ServiceException("无法生成作品去重键");
+        }
+    }
+
+    private String normalizeText(String value) {
+        return value == null ? "" : value.trim().replaceAll("\\s+", " ").toLowerCase(Locale.ROOT);
+    }
+
+    private String sha256(String value) {
+        try {
+            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")
+                .digest(value.getBytes(StandardCharsets.UTF_8)));
+        } catch (Exception ex) {
+            throw new ServiceException("无法生成正文哈希");
+        }
     }
 
     /**
@@ -304,9 +390,16 @@ public class ReaderWorkServiceImpl implements IReaderWorkService {
         vo.setId(work.getId());
         vo.setWorkType(work.getWorkType());
         vo.setCategoryName(work.getCategoryName());
+        vo.setAuthorName(work.getAuthorName());
         vo.setTitle(work.getTitle());
         vo.setIntro(work.getIntro());
         vo.setCoverUrl(work.getCoverUrl());
+        vo.setCoverLandscapeUrl(work.getCoverLandscapeUrl());
+        vo.setCoverBackgroundMode(StringUtils.isBlank(work.getCoverBackgroundMode()) ? "GLOBAL" : work.getCoverBackgroundMode());
+        vo.setCoverBackgroundColor(work.getCoverBackgroundColor());
+        vo.setCoverBackgroundOssId(work.getCoverBackgroundOssId());
+        vo.setCoverBackgroundImageUrl(readerCoverService.resolveBackgroundImageUrl(work.getCoverBackgroundOssId()));
+        vo.setCoverRevision(work.getCoverRevision());
         vo.setSerialStatus(work.getSerialStatus());
         vo.setPublishStatus(work.getPublishStatus());
         vo.setSourceType(work.getSourceType());

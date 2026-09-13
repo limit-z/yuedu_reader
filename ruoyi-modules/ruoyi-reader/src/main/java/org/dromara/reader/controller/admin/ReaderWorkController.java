@@ -4,6 +4,7 @@ import org.dromara.common.core.domain.PageResult;
 import lombok.RequiredArgsConstructor;
 import org.dromara.common.core.domain.R;
 import org.dromara.reader.domain.bo.ReaderWorkBo;
+import org.dromara.reader.domain.bo.ReaderCoverStyleBo;
 import org.dromara.common.mybatis.core.page.PageQuery;
 import org.dromara.reader.domain.bo.ReaderWorkQueryBo;
 import org.dromara.reader.domain.vo.ReaderWorkVo;
@@ -11,7 +12,11 @@ import org.dromara.reader.domain.vo.admin.ReaderCatalogAdminVo;
 import org.dromara.reader.domain.vo.admin.ReaderComicChapterAdminVo;
 import org.dromara.reader.domain.vo.admin.ReaderNovelChapterAdminVo;
 import org.dromara.reader.domain.vo.admin.ReaderWorkDetailAdminVo;
+import org.dromara.reader.domain.vo.admin.ReaderCoverStyleVo;
+import org.dromara.reader.domain.vo.admin.ReaderCoverCrawlTaskAdminVo;
+import org.dromara.reader.domain.vo.admin.ReaderBatchActionResult;
 import org.dromara.reader.service.IReaderWorkService;
+import org.dromara.reader.service.impl.ReaderCoverCrawlerService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -34,6 +39,8 @@ public class ReaderWorkController {
      * 作品管理服务入口，负责作品、目录、预览与上下架动作承接。
      */
     private final IReaderWorkService readerWorkService;
+
+    private final ReaderCoverCrawlerService readerCoverCrawlerService;
 
     /**
      * 创建作品草稿记录。
@@ -99,5 +106,62 @@ public class ReaderWorkController {
     public R<Void> offline(@PathVariable Long workId) {
         readerWorkService.offline(workId);
         return R.ok();
+    }
+
+    /** 批量上架或下架作品，逐条复用作品状态校验并返回失败原因。 */
+    @PostMapping("/batch/{action}")
+    public R<ReaderBatchActionResult> batchStatus(@PathVariable String action, @RequestBody List<Long> workIds) {
+        if (!"publish".equals(action) && !"offline".equals(action)) {
+            throw new IllegalArgumentException("不支持的作品批量操作");
+        }
+        return R.ok(ReaderBatchActionResult.execute(workIds, workId -> {
+            try {
+                if ("publish".equals(action)) readerWorkService.publish(workId);
+                else readerWorkService.offline(workId);
+                return null;
+            } catch (Exception ex) {
+                return ex.getMessage();
+            }
+        }));
+    }
+
+    /** 为历史作品批量补齐缺失封面。 */
+    @PostMapping("/covers/backfill")
+    public R<Integer> backfillCovers() {
+        return R.ok(readerWorkService.backfillMissingCovers());
+    }
+
+    @GetMapping("/cover-settings")
+    public R<ReaderCoverStyleVo> coverSettings() {
+        return R.ok(readerWorkService.queryGlobalCoverStyle());
+    }
+
+    @PutMapping("/cover-settings")
+    public R<Integer> updateCoverSettings(@RequestBody ReaderCoverStyleBo bo) {
+        return R.ok(readerWorkService.updateGlobalCoverStyle(bo));
+    }
+
+    @PutMapping("/{workId}/cover-settings")
+    public R<Void> updateWorkCoverSettings(@PathVariable Long workId, @RequestBody ReaderCoverStyleBo bo) {
+        readerWorkService.updateWorkCoverStyle(workId, bo);
+        return R.ok();
+    }
+
+    /** 查询作品封面候选图、来源和异步采集进度。 */
+    @GetMapping("/{workId}/cover-crawl")
+    public R<ReaderCoverCrawlTaskAdminVo> coverCrawl(@PathVariable Long workId) {
+        return R.ok(readerCoverCrawlerService.query(workId));
+    }
+
+    /** 手动重新执行封面候选图采集。 */
+    @PostMapping("/{workId}/cover-crawl/retry")
+    public R<Void> retryCoverCrawl(@PathVariable Long workId) {
+        readerCoverCrawlerService.retry(workId);
+        return R.ok();
+    }
+
+    @PostMapping("/chapters/reformat")
+    public R<Integer> reformatNovelContents() {
+        return R.ok(readerWorkService.reformatNovelContents());
     }
 }

@@ -27,6 +27,8 @@ public class ReaderWorkDetailAdminVo implements Serializable {
      * 作品内容分类。
      */
     private String categoryName;
+    /** 作品作者。 */
+    private String authorName;
     /**
      * 标题。
      */
@@ -39,6 +41,15 @@ public class ReaderWorkDetailAdminVo implements Serializable {
      * 封面地址。
      */
     private String coverUrl;
+    /**
+     * 横版封面地址。
+     */
+    private String coverLandscapeUrl;
+    private String coverBackgroundMode;
+    private String coverBackgroundColor;
+    private Long coverBackgroundOssId;
+    private String coverBackgroundImageUrl;
+    private Integer coverRevision;
     /**
      * 连载状态。
      */

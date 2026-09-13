@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * 阅读排行榜控制器。
  */
-@RestController
+@RestController("readerAppRankingController")
 @SaIgnore
 @RequiredArgsConstructor
 @RequestMapping("/reader/app/rankings")

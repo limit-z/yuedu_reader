@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
 import org.dromara.common.core.exception.ServiceException;
+import org.dromara.common.core.utils.StringUtils;
 import org.dromara.reader.domain.ReaderBookshelf;
 import org.dromara.reader.domain.ReaderComicChapter;
 import org.dromara.reader.domain.ReaderComicPage;
@@ -100,6 +101,11 @@ public class ReaderAppContentServiceImpl implements IReaderAppContentService {
      * 访客账户服务，负责解析登录态和游客态的当前读者主体。
      */
     private final ReaderVisitorAccountService visitorAccountService;
+
+    /**
+     * 封面服务负责把作品级背景图片 OSS ID 转为可展示地址。
+     */
+    private final ReaderCoverService readerCoverService;
 
     /**
      * 获取作品详情。
@@ -407,10 +413,16 @@ public class ReaderAppContentServiceImpl implements IReaderAppContentService {
         AppWorkCardVo vo = new AppWorkCardVo();
         vo.setWorkId(work.getId());
         vo.setTitle(work.getTitle());
+        vo.setAuthorName(work.getAuthorName());
         vo.setCoverUrl(work.getCoverUrl());
+        vo.setCoverLandscapeUrl(work.getCoverLandscapeUrl());
+        vo.setCoverBackgroundMode(StringUtils.isBlank(work.getCoverBackgroundMode()) ? "GLOBAL" : work.getCoverBackgroundMode());
+        vo.setCoverBackgroundColor(work.getCoverBackgroundColor());
+        vo.setCoverBackgroundImageUrl(readerCoverService.resolveBackgroundImageUrl(work.getCoverBackgroundOssId()));
         vo.setIntro(work.getIntro());
         vo.setWorkType(work.getWorkType());
         vo.setCategoryName(work.getCategoryName());
+        vo.setSerialStatus(work.getSerialStatus());
         vo.setPublishStatus(work.getPublishStatus());
         vo.setTotalChapters(work.getTotalChapters());
         vo.setTotalPages(work.getTotalPages());
@@ -424,7 +436,12 @@ public class ReaderAppContentServiceImpl implements IReaderAppContentService {
         AppWorkDetailVo vo = new AppWorkDetailVo();
         vo.setWorkId(work.getId());
         vo.setTitle(work.getTitle());
+        vo.setAuthorName(work.getAuthorName());
         vo.setCoverUrl(work.getCoverUrl());
+        vo.setCoverLandscapeUrl(work.getCoverLandscapeUrl());
+        vo.setCoverBackgroundMode(StringUtils.isBlank(work.getCoverBackgroundMode()) ? "GLOBAL" : work.getCoverBackgroundMode());
+        vo.setCoverBackgroundColor(work.getCoverBackgroundColor());
+        vo.setCoverBackgroundImageUrl(readerCoverService.resolveBackgroundImageUrl(work.getCoverBackgroundOssId()));
         vo.setIntro(work.getIntro());
         vo.setWorkType(work.getWorkType());
         vo.setCategoryName(work.getCategoryName());
@@ -504,7 +521,12 @@ public class ReaderAppContentServiceImpl implements IReaderAppContentService {
         AppWorkDetailVo vo = new AppWorkDetailVo();
         vo.setWorkId(source.getWorkId());
         vo.setTitle(source.getTitle());
+        vo.setAuthorName(source.getAuthorName());
         vo.setCoverUrl(source.getCoverUrl());
+        vo.setCoverLandscapeUrl(source.getCoverLandscapeUrl());
+        vo.setCoverBackgroundMode(StringUtils.isBlank(source.getCoverBackgroundMode()) ? "GLOBAL" : source.getCoverBackgroundMode());
+        vo.setCoverBackgroundColor(source.getCoverBackgroundColor());
+        vo.setCoverBackgroundImageUrl(source.getCoverBackgroundImageUrl());
         vo.setIntro(source.getIntro());
         vo.setWorkType(source.getWorkType());
         vo.setCategoryName(source.getCategoryName());

@@ -12,6 +12,9 @@ import org.dromara.reader.domain.ReaderContentAudit;
 import org.dromara.reader.domain.ReaderComicChapter;
 import org.dromara.reader.domain.ReaderNovelChapter;
 import org.dromara.reader.domain.ReaderWork;
+import org.dromara.reader.domain.ReaderSourceChapterSnapshot;
+import org.dromara.reader.domain.ReaderSourceTask;
+import org.dromara.reader.domain.ReaderSourceTaskBook;
 import org.dromara.reader.domain.bo.ReaderAuditQueryBo;
 import org.dromara.reader.domain.vo.admin.ReaderAuditRecordVo;
 import org.dromara.reader.enums.PublishStatus;
@@ -20,6 +23,9 @@ import org.dromara.reader.mapper.ReaderComicChapterMapper;
 import org.dromara.reader.mapper.ReaderContentAuditMapper;
 import org.dromara.reader.mapper.ReaderNovelChapterMapper;
 import org.dromara.reader.mapper.ReaderWorkMapper;
+import org.dromara.reader.mapper.ReaderSourceChapterSnapshotMapper;
+import org.dromara.reader.mapper.ReaderSourceTaskMapper;
+import org.dromara.reader.mapper.ReaderSourceTaskBookMapper;
 import org.dromara.reader.service.IReaderAuditService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -60,6 +66,9 @@ public class ReaderAuditServiceImpl implements IReaderAuditService {
      * 发布刷新任务，负责状态变化后的详情与目录缓存失效。
      */
     private final ReaderPublishRefreshJob publishRefreshJob;
+    private final ReaderSourceChapterSnapshotMapper snapshotMapper;
+    private final ReaderSourceTaskMapper sourceTaskMapper;
+    private final ReaderSourceTaskBookMapper sourceTaskBookMapper;
 
     /**
      * 审核通过指定内容记录。
@@ -94,8 +103,38 @@ public class ReaderAuditServiceImpl implements IReaderAuditService {
                 .eq(ReaderComicChapter::getWorkId, work.getId())
                 .set(ReaderComicChapter::getPublishStatus, PublishStatus.PUBLISHED.name())
         );
+        confirmSourceCollection(audit);
         // 发布状态变化后立即刷新缓存，让首页、详情和阅读页尽快读到最新数据。
         publishRefreshJob.execute(work.getId());
+    }
+
+    /** 审核通过后同步清理采集侧待审状态，保证任务明细与审核池状态一致。 */
+    private void confirmSourceCollection(ReaderContentAudit audit) {
+        if (audit.getSourceTaskBookId() != null) {
+            snapshotMapper.update(null, Wrappers.<ReaderSourceChapterSnapshot>lambdaUpdate()
+                .eq(ReaderSourceChapterSnapshot::getTaskBookId, audit.getSourceTaskBookId())
+                .in(ReaderSourceChapterSnapshot::getSnapshotStatus, List.of("NEW", "CHANGED"))
+                .set(ReaderSourceChapterSnapshot::getSnapshotStatus, "CONFIRMED"));
+            ReaderSourceTaskBook book = sourceTaskBookMapper.selectById(audit.getSourceTaskBookId());
+            if (book != null) {
+                book.setStatus("COMPLETED");
+                sourceTaskBookMapper.updateById(book);
+            }
+        } else if (audit.getSourceTaskId() != null) {
+            snapshotMapper.update(null, Wrappers.<ReaderSourceChapterSnapshot>lambdaUpdate()
+                .eq(ReaderSourceChapterSnapshot::getTaskId, audit.getSourceTaskId())
+                .in(ReaderSourceChapterSnapshot::getSnapshotStatus, List.of("NEW", "CHANGED"))
+                .set(ReaderSourceChapterSnapshot::getSnapshotStatus, "CONFIRMED"));
+        }
+        if (audit.getSourceTaskId() != null) {
+            ReaderSourceTask task = sourceTaskMapper.selectById(audit.getSourceTaskId());
+            if (task != null && snapshotMapper.selectCount(Wrappers.<ReaderSourceChapterSnapshot>lambdaQuery()
+                .eq(ReaderSourceChapterSnapshot::getTaskId, task.getId())
+                .in(ReaderSourceChapterSnapshot::getSnapshotStatus, List.of("NEW", "CHANGED"))) == 0) {
+                task.setStatus("COMPLETED");
+                sourceTaskMapper.updateById(task);
+            }
+        }
     }
 
     /**
@@ -152,6 +191,8 @@ public class ReaderAuditServiceImpl implements IReaderAuditService {
         ReaderAuditRecordVo vo = new ReaderAuditRecordVo();
         vo.setId(audit.getId());
         vo.setWorkId(audit.getWorkId());
+        vo.setSourceTaskId(audit.getSourceTaskId());
+        vo.setSourceTaskBookId(audit.getSourceTaskBookId());
         vo.setWorkTitle(workTitleMap.get(audit.getWorkId()));
         vo.setAuditStatus(audit.getAuditStatus());
         vo.setAuditComment(audit.getAuditComment());

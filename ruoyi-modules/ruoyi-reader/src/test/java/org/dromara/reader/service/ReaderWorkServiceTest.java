@@ -16,7 +16,9 @@ import org.dromara.reader.domain.vo.admin.ReaderWorkDetailAdminVo;
 import org.dromara.reader.enums.PublishStatus;
 import org.dromara.reader.job.ReaderPublishRefreshJob;
 import org.dromara.reader.mapper.ReaderWorkMapper;
+import org.dromara.reader.mapper.ReaderSourceChapterSnapshotMapper;
 import org.dromara.reader.service.impl.ReaderWorkServiceImpl;
+import org.dromara.reader.service.impl.ReaderCoverService;
 import org.dromara.reader.support.ReaderAllEnvTest;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -50,6 +52,10 @@ class ReaderWorkServiceTest {
     private ReaderContentAuditMapper contentAuditMapper;
     @Mock
     private ReaderPublishRefreshJob publishRefreshJob;
+    @Mock
+    private ReaderCoverService readerCoverService;
+    @Mock
+    private ReaderSourceChapterSnapshotMapper sourceChapterSnapshotMapper;
 
     @InjectMocks
     private ReaderWorkServiceImpl service;

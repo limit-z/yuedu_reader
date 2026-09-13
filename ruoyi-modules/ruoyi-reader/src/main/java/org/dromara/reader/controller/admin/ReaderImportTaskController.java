@@ -7,11 +7,13 @@ import org.dromara.common.mybatis.core.page.PageQuery;
 import org.dromara.reader.domain.bo.ReaderImportTaskBo;
 import org.dromara.reader.domain.bo.ReaderImportTaskQueryBo;
 import org.dromara.reader.domain.vo.admin.ReaderImportTaskAdminVo;
+import org.dromara.reader.domain.vo.admin.ReaderBatchActionResult;
 import org.dromara.reader.service.IReaderImportTaskService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -41,5 +43,16 @@ public class ReaderImportTaskController {
     @GetMapping("/list")
     public R<PageResult<ReaderImportTaskAdminVo>> list(ReaderImportTaskQueryBo bo, PageQuery pageQuery) {
         return R.ok(importTaskService.queryPageList(bo, pageQuery));
+    }
+
+    /**
+     * 批量取消或重试解析任务。
+     */
+    @PostMapping("/batch/{action}")
+    public R<ReaderBatchActionResult> batchAction(@PathVariable String action, @RequestBody java.util.List<Long> taskIds) {
+        if (!"cancel".equals(action) && !"retry".equals(action)) {
+            throw new IllegalArgumentException("不支持的导入任务批量操作");
+        }
+        return R.ok(importTaskService.batchAction(taskIds, action));
     }
 }

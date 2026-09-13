@@ -23,6 +23,10 @@ public class AppBookshelfItemVo {
      */
     private String coverUrl;
     /**
+     * 横版封面地址。
+     */
+    private String coverLandscapeUrl;
+    /**
      * 作品类型。
      */
     private String workType;
