@@ -152,7 +152,6 @@ class ReaderSourceWorkerServiceTest {
         ReaderSourceSite site = site(task.getSiteId());
         ReaderSourcePolicy policy = policy(task.getPolicyId());
         when(taskRunMapper.selectById(run.getId())).thenReturn(run);
-        when(coordinator.ownsRun(run.getId(), "worker-a")).thenReturn(true);
         when(taskMapper.selectById(task.getId())).thenReturn(task);
         when(policyMapper.selectById(task.getPolicyId())).thenReturn(policy);
         when(coordinator.renewRun(run.getId(), "worker-a")).thenReturn(true);
@@ -176,7 +175,6 @@ class ReaderSourceWorkerServiceTest {
         ReaderSourceTaskRun run = run(task.getId());
         ReaderSourcePolicy policy = policy(task.getPolicyId());
         when(taskRunMapper.selectById(run.getId())).thenReturn(run);
-        when(coordinator.ownsRun(run.getId(), "worker-a")).thenReturn(true);
         when(taskMapper.selectById(task.getId())).thenReturn(task);
         when(policyMapper.selectById(task.getPolicyId())).thenReturn(policy);
         when(coordinator.renewRun(run.getId(), "worker-a")).thenReturn(true);
