@@ -53,3 +53,18 @@ nbdist/
 
 application-local.yml
 application-ga.yml
+
+# Runtime-generated reader cover images
+/data/reader-covers/
+
+# Local runtime state, logs, generated cover files, and worker environments
+/data/
+/logs/
+/ruoyi-admin/data/reader-covers/
+/tools/reader-source-worker/python/.venv/
+
+# Local runtime state, logs, generated cover files, and worker environments
+/data/
+/logs/
+/ruoyi-admin/data/reader-covers/
+/tools/reader-source-worker/python/.venv/
