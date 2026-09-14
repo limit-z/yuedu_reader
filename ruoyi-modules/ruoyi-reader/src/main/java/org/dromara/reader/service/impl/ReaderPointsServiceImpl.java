@@ -70,6 +70,7 @@ public class ReaderPointsServiceImpl implements IReaderPointsService {
      */
     @Override
     public AppPointsVo claimDailyCheckin() {
+        visitorAccountService.requireLoggedInReaderId();
         ReaderPointsState state = loadState();
         LocalDate today = LocalDate.now();
         if (today.equals(state.getCheckinDate())) {
@@ -93,6 +94,7 @@ public class ReaderPointsServiceImpl implements IReaderPointsService {
      */
     @Override
     public AppPointsVo claimTask(String taskKey) {
+        visitorAccountService.requireLoggedInReaderId();
         ReaderPointsState state = loadState();
         PointsTask task = resolveTask(taskKey);
         if (task == null) {

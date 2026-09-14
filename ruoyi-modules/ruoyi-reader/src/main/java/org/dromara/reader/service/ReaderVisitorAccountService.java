@@ -79,6 +79,15 @@ public class ReaderVisitorAccountService {
         return readerId;
     }
 
+    /** 仅允许已登录读者执行需要账号归属的操作。 */
+    public Long requireLoggedInReaderId() {
+        Long loginUserId = LoginHelper.getUserId();
+        if (loginUserId == null) {
+            throw new ServiceException("请先登录后再进行此操作");
+        }
+        return loginUserId;
+    }
+
     /**
      * 判断当前请求是否处于游客模式。
      */
