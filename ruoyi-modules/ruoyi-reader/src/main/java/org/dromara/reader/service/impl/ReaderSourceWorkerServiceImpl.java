@@ -1257,9 +1257,10 @@ public class ReaderSourceWorkerServiceImpl implements IReaderSourceWorkerService
             book.setAuthorName(trimToLength(item.getAuthorName().trim(), 128));
             changed = true;
         }
-        if (StringUtils.isNotBlank(item.getCategoryName()) && !item.getCategoryName().trim().equals(book.getCategoryName())) {
-            book.setCategoryName(trimToLength(item.getCategoryName().trim(), 64));
-            ensureCategory(item.getCategoryName().trim());
+        String discoveredCategory = normalizeCategoryName(item.getCategoryName());
+        if (StringUtils.isNotBlank(discoveredCategory) && !discoveredCategory.equals(book.getCategoryName())) {
+            book.setCategoryName(trimToLength(discoveredCategory, 64));
+            ensureCategory(discoveredCategory);
             changed = true;
         }
         if (StringUtils.isNotBlank(item.getSerialStatus())) {
@@ -1276,8 +1277,8 @@ public class ReaderSourceWorkerServiceImpl implements IReaderSourceWorkerService
     private ReaderWork ensureCollectionWork(ReaderSourceTask task, ReaderSourceTaskBook taskBook, ReaderSourceWorkerItemBo item) {
         String discoveredAuthor = normalizeAuthor(item != null && StringUtils.isNotBlank(item.getAuthorName())
             ? item.getAuthorName() : taskBook == null ? null : taskBook.getAuthorName());
-        String discoveredCategory = item != null && StringUtils.isNotBlank(item.getCategoryName())
-            ? item.getCategoryName() : taskBook == null ? task.getCategoryName() : taskBook.getCategoryName();
+        String discoveredCategory = normalizeCategoryName(item != null && StringUtils.isNotBlank(item.getCategoryName())
+            ? item.getCategoryName() : taskBook == null ? task.getCategoryName() : taskBook.getCategoryName());
         String discoveredStatus = normalizeSerialStatus(item != null && StringUtils.isNotBlank(item.getSerialStatus())
             ? item.getSerialStatus() : taskBook == null ? null : taskBook.getSerialStatus());
         if (taskBook != null && taskBook.getWorkId() != null) {
@@ -1329,9 +1330,10 @@ public class ReaderSourceWorkerServiceImpl implements IReaderSourceWorkerService
             work.setAuthorName(trimToLength(author, 128));
             changed = true;
         }
-        if (StringUtils.isNotBlank(category) && !category.equals(work.getCategoryName())) {
-            work.setCategoryName(trimToLength(category, 64));
-            ensureCategory(category);
+        String normalizedCategory = normalizeCategoryName(category);
+        if (StringUtils.isNotBlank(normalizedCategory) && !normalizedCategory.equals(work.getCategoryName())) {
+            work.setCategoryName(trimToLength(normalizedCategory, 64));
+            ensureCategory(normalizedCategory);
             changed = true;
         }
         if (!serialStatus.equals(work.getSerialStatus())) {
@@ -1429,12 +1431,14 @@ public class ReaderSourceWorkerServiceImpl implements IReaderSourceWorkerService
 
     private void ensureCategory(String value) {
         if (StringUtils.isBlank(value)) return;
-        String normalized = normalizeText(value);
+        String categoryName = normalizeCategoryName(value);
+        if (StringUtils.isBlank(categoryName)) return;
+        String normalized = normalizeText(categoryName);
         ReaderWorkCategory category = categoryMapper.selectOne(Wrappers.<ReaderWorkCategory>lambdaQuery()
             .eq(ReaderWorkCategory::getNormalizedName, normalized).last("LIMIT 1"));
         if (category == null) {
             category = new ReaderWorkCategory();
-            category.setCategoryName(trimToLength(value, 64));
+            category.setCategoryName(trimToLength(categoryName, 64));
             category.setNormalizedName(normalized);
             category.setSourceType("SOURCE");
             category.setStatus("1");
@@ -1448,6 +1452,16 @@ public class ReaderSourceWorkerServiceImpl implements IReaderSourceWorkerService
 
     private String normalizeText(String value) {
         return value == null ? "" : value.trim().replaceAll("\\s+", " ").toLowerCase(Locale.ROOT);
+    }
+
+    /** 清理来源分类名称的外层中括号，统一作品与分类字典的展示值。 */
+    private String normalizeCategoryName(String value) {
+        if (StringUtils.isBlank(value)) return "";
+        String name = value.trim().replaceAll("\\s+", " ");
+        if (name.length() > 2 && name.startsWith("[") && name.endsWith("]")) {
+            name = name.substring(1, name.length() - 1).trim();
+        }
+        return name;
     }
 
     private String normalizeAuthor(String author) {

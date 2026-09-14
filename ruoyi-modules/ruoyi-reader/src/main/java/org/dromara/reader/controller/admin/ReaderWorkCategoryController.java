@@ -92,9 +92,18 @@ public class ReaderWorkCategoryController {
 
     private void normalizeAndValidate(ReaderWorkCategory category) {
         if (category == null || StringUtils.isBlank(category.getCategoryName())) throw new ServiceException("分类名称不能为空");
-        String name = category.getCategoryName().trim();
+        String name = normalizeCategoryName(category.getCategoryName());
         if (name.length() > 64) throw new ServiceException("分类名称不能超过64个字符");
         category.setCategoryName(name);
         category.setNormalizedName(name.replaceAll("\\s+", " ").toLowerCase(Locale.ROOT));
+    }
+
+    /** 来源站点常用中括号包裹分类，去除外层标记避免生成重复分类。 */
+    private String normalizeCategoryName(String value) {
+        String name = value.trim().replaceAll("\\s+", " ");
+        if (name.length() > 2 && name.startsWith("[") && name.endsWith("]")) {
+            name = name.substring(1, name.length() - 1).trim();
+        }
+        return name;
     }
 }
