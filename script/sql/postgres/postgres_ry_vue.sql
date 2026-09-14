@@ -375,11 +375,22 @@ insert into sys_menu values(1761400000000000120, '任务调度中心', 176140000
 -- snail-ai server控制台
 insert into sys_menu values(1761400000000000121, 'AI控制台', 1761400000000000002, 7, 'snailai', 'monitor/snailai/index', '', 'N', 'Y', 'C', '0', '0', 'monitor:snailai:list', 'checkbox', '', '', 1761000000000000103, 1761100000000000001, now(), null, null, 'AI控制台菜单');
 -- 阅读器管理
-insert into sys_menu values(1761400000000000010, '阅读器管理', 0, 10, 'reader-admin', null, '', 'N', 'Y', 'M', '0', '0', '', 'book', '', '', 1761000000000000103, 1761100000000000001, now(), null, null, '阅读器管理目录');
-insert into sys_menu values(1761400000000000011, '作品管理', 1761400000000000010, 1, 'work', 'reader-admin/work/index', '', 'N', 'Y', 'C', '0', '0', 'reader:work:list', 'document', '', '', 1761000000000000103, 1761100000000000001, now(), null, null, '作品管理菜单');
-insert into sys_menu values(1761400000000000012, '导入任务', 1761400000000000010, 2, 'import-task', 'reader-admin/import-task/index', '', 'N', 'Y', 'C', '0', '0', 'reader:import-task:list', 'upload', '', '', 1761000000000000103, 1761100000000000001, now(), null, null, '导入任务菜单');
-insert into sys_menu values(1761400000000000013, '内容审核', 1761400000000000010, 3, 'audit', 'reader-admin/audit/index', '', 'N', 'Y', 'C', '0', '0', 'reader:audit:list', 'check', '', '', 1761000000000000103, 1761100000000000001, now(), null, null, '内容审核菜单');
-insert into sys_menu values(1761400000000000014, '发布记录', 1761400000000000010, 4, 'publish-log', 'reader-admin/publish-log/index', '', 'N', 'Y', 'C', '0', '0', 'reader:publish-log:list', 'clock', '', '', 1761000000000000103, 1761100000000000001, now(), null, null, '发布记录菜单');
+insert into sys_menu values(1761400000000000010, '阅读器管理', 0, 10, 'reader-admin', null, '', 'N', 'Y', 'M', '0', '0', '', 'documentation', '', '', 1761000000000000103, 1761100000000000001, now(), null, null, '阅读器管理目录');
+insert into sys_menu values(1761400000000000020, '作品管理', 1761400000000000010, 1, 'works', 'ParentView', '', 'N', 'Y', 'M', '0', '0', '', 'documentation', '', '', 1761000000000000010, 1761100000000000001, now(), null, null, '阅读器作品运营菜单分组');
+insert into sys_menu values(1761400000000000011, '作品列表', 1761400000000000020, 1, 'list', 'reader-admin/work/index', '', 'N', 'Y', 'C', '0', '0', 'reader:work:list', 'clipboard', '', '', 1761000000000000010, 1761100000000000001, now(), null, null, '作品列表菜单');
+insert into sys_menu values(1761400000000000012, '导入任务', 1761400000000000020, 2, 'import-task', 'reader-admin/import-task/index', '', 'N', 'Y', 'C', '0', '0', 'reader:import-task:list', 'upload', '', '', 1761000000000000010, 1761100000000000001, now(), null, null, '导入任务菜单');
+insert into sys_menu values(1761400000000000013, '内容审核', 1761400000000000020, 3, 'audit', 'reader-admin/audit/index', '', 'N', 'Y', 'C', '0', '0', 'reader:audit:list', 'finish', '', '', 1761000000000000010, 1761100000000000001, now(), null, null, '内容审核菜单');
+insert into sys_menu values(1761400000000000014, '发布记录', 1761400000000000020, 4, 'publish-log', 'reader-admin/publish-log/index', '', 'N', 'Y', 'C', '0', '0', 'reader:publish-log:list', 'time', '', '', 1761000000000000010, 1761100000000000001, now(), null, null, '发布记录菜单');
+insert into sys_menu values(1761400000000000016, '作品分类', 1761400000000000020, 5, 'category', 'reader-admin/work-category/index', '', 'N', 'Y', 'C', '0', '0', 'reader:category:list', 'category', '', '', 1761000000000000010, 1761100000000000001, now(), null, null, '作品分类菜单');
+insert into sys_menu values(1761400000000000017, '榜单管理', 1761400000000000020, 6, 'ranking', 'reader-admin/ranking/index', '', 'N', 'Y', 'C', '0', '0', 'reader:ranking:list', 'star', '', '', 1761000000000000010, 1761100000000000001, now(), null, null, '榜单管理菜单');
+insert into sys_menu values(1761400000000000021, '采集中心', 1761400000000000010, 2, 'sources', 'ParentView', '', 'N', 'Y', 'M', '0', '0', 'reader:source:list', 'link', '', '', 1761000000000000010, 1761100000000000001, now(), null, null, '阅读器书源采集菜单分组');
+insert into sys_menu values(1761400000000000015, '采集任务', 1761400000000000021, 1, 'tasks', 'reader-admin/source-center/index', '', 'N', 'Y', 'C', '0', '0', 'reader:source:list', 'link', '', '', 1761000000000000010, 1761100000000000001, now(), null, null, '书源采集任务菜单');
+insert into sys_menu values(1761400000000000018, '采集数据大盘', 1761400000000000021, 2, 'dashboard', 'reader-admin/source-dashboard/index', '', 'N', 'Y', 'C', '0', '0', 'reader:source:list', 'chart', '', '', 1761000000000000010, 1761100000000000001, now(), null, null, '采集数据大盘菜单');
+insert into sys_menu values(1761400000000000022, 'H5 管理', 1761400000000000010, 3, 'h5', 'ParentView', '', 'N', 'Y', 'M', '0', '0', 'reader:h5-user:list,reader:h5-comment:list,reader:h5-points:list,reader:feedback:list', 'phone', '', '', 1761000000000000010, 1761100000000000001, now(), null, null, '阅读器 H5 运营菜单分组');
+insert into sys_menu values(1761400000000000023, '读者用户', 1761400000000000022, 1, 'users', 'reader-admin/h5-user/index', '', 'N', 'Y', 'C', '0', '0', 'reader:h5-user:list', 'user', '', '', 1761000000000000010, 1761100000000000001, now(), null, null, 'H5 读者用户菜单');
+insert into sys_menu values(1761400000000000024, '书评管理', 1761400000000000022, 2, 'comments', 'reader-admin/h5-comment/index', '', 'N', 'Y', 'C', '0', '0', 'reader:h5-comment:list', 'message', '', '', 1761000000000000010, 1761100000000000001, now(), null, null, 'H5 书评管理菜单');
+insert into sys_menu values(1761400000000000025, '积分规则', 1761400000000000022, 3, 'points', 'reader-admin/h5-points/index', '', 'N', 'Y', 'C', '0', '0', 'reader:h5-points:list', 'money', '', '', 1761000000000000010, 1761100000000000001, now(), null, null, 'H5 积分规则菜单');
+insert into sys_menu values(1761400000000000019, '用户反馈', 1761400000000000022, 4, 'feedback', 'reader-admin/feedback/index', '', 'N', 'Y', 'C', '0', '0', 'reader:feedback:list', 'message', '', '', 1761000000000000010, 1761100000000000001, now(), null, null, 'H5 用户反馈菜单');
 
 -- 三级菜单
 insert into sys_menu values(1761400000000000500, '操作日志', 1761400000000000108, 1, 'operlog', 'monitor/operlog/index', '', 'N', 'Y', 'C', '0', '0', 'monitor:operlog:list', 'form', '', '', 1761000000000000103, 1761100000000000001, now(), null, null, '操作日志菜单');
@@ -630,6 +641,17 @@ insert into sys_role_menu values (1761300000000000003, 1761400000000000011);
 insert into sys_role_menu values (1761300000000000003, 1761400000000000012);
 insert into sys_role_menu values (1761300000000000003, 1761400000000000013);
 insert into sys_role_menu values (1761300000000000003, 1761400000000000014);
+insert into sys_role_menu values (1761300000000000003, 1761400000000000015);
+insert into sys_role_menu values (1761300000000000003, 1761400000000000016);
+insert into sys_role_menu values (1761300000000000003, 1761400000000000017);
+insert into sys_role_menu values (1761300000000000003, 1761400000000000018);
+insert into sys_role_menu values (1761300000000000003, 1761400000000000019);
+insert into sys_role_menu values (1761300000000000003, 1761400000000000020);
+insert into sys_role_menu values (1761300000000000003, 1761400000000000021);
+insert into sys_role_menu values (1761300000000000003, 1761400000000000022);
+insert into sys_role_menu values (1761300000000000003, 1761400000000000023);
+insert into sys_role_menu values (1761300000000000003, 1761400000000000024);
+insert into sys_role_menu values (1761300000000000003, 1761400000000000025);
 insert into sys_role_menu values (1761300000000000004, 1761400000000000005);
 insert into sys_role_menu values (1761300000000000004, 1761400000000001500);
 insert into sys_role_menu values (1761300000000000004, 1761400000000001501);

@@ -6,7 +6,7 @@ SELECT 1761400000000000018, '采集数据大盘', 1761400000000000010, 4, 'sourc
        'reader-admin/source-dashboard/index', '', 'N', 'Y', 'C', '0', '0', 'reader:source:list',
        'data-analysis', 1761000000000000010, 1761100000000000001, sysdate(), NULL, NULL, '采集中心全链路统计大盘'
 WHERE NOT EXISTS (
-  SELECT 1 FROM sys_menu WHERE parent_id = 1761400000000000010 AND path = 'source-dashboard'
+  SELECT 1 FROM sys_menu WHERE menu_id = 1761400000000000018
 );
 
 INSERT INTO sys_role_menu (role_id, menu_id)

@@ -170,7 +170,7 @@ SELECT 1761400000000000015, '书源采集中心', 1761400000000000010, 5, 'sourc
        'connection', 1761000000000000103, 1761100000000000001, sysdate(), NULL, NULL, '书源采集中心菜单'
 WHERE NOT EXISTS (
   SELECT 1 FROM sys_menu
-  WHERE parent_id = 1761400000000000010 AND path = 'source-center'
+  WHERE menu_id = 1761400000000000015
 );
 
 INSERT INTO sys_role_menu (role_id, menu_id)
